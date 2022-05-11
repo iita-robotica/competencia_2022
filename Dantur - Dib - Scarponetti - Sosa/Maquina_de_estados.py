@@ -18,6 +18,6 @@ while contador<12:
         estado = "verde"
 
     contador+=1
-    time.sleep(3)
+    time.sleep(50)
 
 print("Programa terminado")
