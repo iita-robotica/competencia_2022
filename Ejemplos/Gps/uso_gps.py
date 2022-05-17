@@ -12,7 +12,6 @@ gps.enable(timestep)
 destino_x = 0.0
 destino_y = -4.0
 
-
 #Create your objects here
 ruedaIzquierda = robot.getDevice("wheel1 motor")    # Motor initialization
 ruedaDerecha = robot.getDevice("wheel2 motor")
@@ -23,11 +22,6 @@ ruedaDerecha.setPosition(float('inf'))
 def avanzar(vel):
     ruedaIzquierda.setVelocity(vel)
     ruedaDerecha.setVelocity(vel)
-
-def doblar (vel):
-        ruedaIzquierda.setVelocity(-vel)
-        ruedaDerecha.setVelocity(vel)
-
 
 
 robot.step(timestep) # Actualizo los valores de los sensores
@@ -42,7 +36,7 @@ while robot.step(timestep) != -1:
     if ( x == destino_x) and ( y == destino_y ):
         # Print si y == destino_y Y x == destino_x
         print ( "Llegue a destino.")
-        doblar(1.0)
+        avanzar(0)
         break
     else:
         avanzar(1.0)
