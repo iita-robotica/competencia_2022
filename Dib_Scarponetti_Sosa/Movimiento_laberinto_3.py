@@ -30,14 +30,15 @@ distance_sensor1.enable(timestep)
 distance_sensor2 = robot.getDevice("distance sensor2")
 distance_sensor2.enable(timestep)
 
-def estado_1 (vel):
+def avanzar (vel):
     ruedaIzquierda.setVelocity(vel)
     ruedaDerecha.setVelocity(vel)
 
-def estado_2 (vel):
+def girar (vel):
     ruedaIzquierda.setVelocity(-vel)
     ruedaDerecha.setVelocity(vel)
 
+estado = "estado_1"
 
 while robot.step(timestep) != -1:
 
@@ -47,11 +48,14 @@ while robot.step(timestep) != -1:
     distance2 = distance_sensor2.getValue()
     print("Distance hacia la derecha 2: " + str(distance2))
 
-    if distance1>0.06:
-        estado_1 (1.0)
+    if distance1>0.06 and estado=="estado_1":
+        avanzar (1.0)
 
     else:
-        estado_2 (0.5)
+        girar (0.5)
+        estado="estado_2"
             
         if (abs(encoderDerecho.getValue() - noventaGrados) < 0.01):
-            estado_1 (1.0)
+            avanzar (0)
+            girar(0)
+            estado="estado_1"
