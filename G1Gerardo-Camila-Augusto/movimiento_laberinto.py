@@ -6,6 +6,7 @@ robot = Robot()
 timeStep = 32
 noventaGrados = 14.8
 tilesize = 0.06
+estado = "Primero"
 
 destino_x = 0.0
 destino_y = -4.0
@@ -34,6 +35,7 @@ def avanzar(vel):
     ruedaDerecha.setVelocity(vel)
 
 def girar(vel):
+        ''' Girar implica detener el avance'''
         ruedaIzquierda.setVelocity(-vel)
         ruedaDerecha.setVelocity(vel)
 
@@ -43,25 +45,27 @@ startY = gps.getValues()[2]/tilesize
 
 while robot.step(timeStep) != -1: 
 
-    estado = "Primero"
     distance1 = distance_sensor1.getValue()
 
     distance2 = distance_sensor2.getValue()
     #print("Distance hacia la derecha 2: " + str(distance2))
 
-    if distance1 > (tilesize/2) and estado == "Primero":
-        print("Distancia sensor delantero: " + str(distance1))
-        avanzar(1)
+    if estado == "Primero":
+        '''Estructura if anidada, siendo que en el caso de que la mitad de la baldoza sea menor a la distancia del sensor entonces se avanza'''
+        if distance1 > (tilesize/2):
+            print("Distancia sensor delantero: " + str(distance1))
+            avanzar(1)
+        else:
+            estado = "Segundo"
     
-    elif distance1 < (tilesize/2):
-        estado = "Segundo"
-        while robot.step(timeStep) != -1:                                  
-            avanzar(0)
-            girar(0.5)
-            print("Diferencia del encoder:", encoderDerecho.getValue() - noventaGrados)
-
-            if(abs(encoderDerecho.getValue() - noventaGrados) < 0.01) and estado == "Segundo":
-                avanzar(0)
+    elif estado == "Segundo":        
+        '''En este estado se rotará 90° hasta que el estado vuelva a ser -Primero-'''                   
+        girar(0.5)
+        print("Diferencia del encoder:", encoderDerecho.getValue() - noventaGrados)
+        if(abs(encoderDerecho.getValue() - noventaGrados) < 0.01) and estado == "Segundo":
                 girar(0)
                 estado = "Primero"
-                break
+
+# EVITAR USAR CICLOS WHILE ANIDADOS
+# Si estoy en el estado primero, y la distancia es mayor a la mitad de una baldoza, avanzo. Sino paso al estado 2.
+
