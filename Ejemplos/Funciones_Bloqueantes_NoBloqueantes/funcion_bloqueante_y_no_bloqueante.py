@@ -3,6 +3,7 @@ import time
 
 
 contador = 0
+objetivo_contador = 3
 
 def tarea():
     global contador
@@ -12,27 +13,28 @@ def tarea():
 
 def bloqueante():
     global contador
-    while (contador < 10):
+    while (contador < objetivo_contador):
         tarea()   # increamento el contador
 
 def no_bloqueante():
     global contador
-    if (contador < 10):
+    if (contador < objetivo_contador):
         tarea()  # incremento el contador
         return False
     else:
         return True
 
 
-# Funcion no bloqueante
+print(" Funcion no bloqueante")
 print("hola")
 while True:
-    if ( no_bloqueante() == True):
+    ret = no_bloqueante()
+    print("Trabajando...")
+    if ( ret == True ):
         print("mundo")
-
-    if(contador >= 10):
         break
 
+print("Funcion bloqueante")
 
 #Reinicio contador para evaluar el segundo caso
 contador = 0
@@ -41,7 +43,8 @@ contador = 0
 print("hola")
 while True:
     bloqueante()
-    if(contador >= 10):
+    print("Trabajando...")
+    if(contador >= objetivo_contador):
       print("mundo")
       break
 
