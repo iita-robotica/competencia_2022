@@ -61,4 +61,3 @@ while robot.step(timestep) != -1:
         avanzar(1.0)
 
     print("Imprimo la posicion actual x:", x,"y:", y)
-    
