@@ -40,4 +40,3 @@ while robot.step(timestep) != -1:
         girar(2.0)
     
     print("Imprimo la posicion actual x:", x,"y:", y)
-    
