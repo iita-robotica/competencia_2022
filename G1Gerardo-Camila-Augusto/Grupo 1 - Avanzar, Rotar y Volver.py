@@ -55,13 +55,4 @@ while robot.step(timeStep) != -1:
 
     else:
         avanzar(1)
-
-
-
-
-
-
-
-
-
-
+        

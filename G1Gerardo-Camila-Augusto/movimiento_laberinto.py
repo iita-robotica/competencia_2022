@@ -68,4 +68,3 @@ while robot.step(timeStep) != -1:
 
 # EVITAR USAR CICLOS WHILE ANIDADOS
 # Si estoy en el estado primero, y la distancia es mayor a la mitad de una baldoza, avanzo. Sino paso al estado 2.
-

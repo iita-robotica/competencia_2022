@@ -30,4 +30,5 @@ while contadorCiclo < 4:
         estado = "Rojo"
 
     time.sleep(tiempoEspara)
+
 print ("Programa terminado.")
