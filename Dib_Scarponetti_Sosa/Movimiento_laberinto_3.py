@@ -9,7 +9,7 @@ robot = Robot()
 timestep = 32
 tilesize = 0.06
 
-noventaGrados = 8.5
+noventaGrados = 7.7
 
 gps = robot.getDevice("gps")
 gps.enable(timestep)
@@ -50,15 +50,13 @@ while robot.step(timestep) != -1:
 
     if distance1>0.06 and estado=="estado_1":
         avanzar (1.0)
-
-    else:
-        ruedaIzquierda.setPosition(float(noventaGrados))
         estado="estado_2"
-        girar (0.5)
+
+    if distance1<=0.06 and estado=="estado_2":
+        ruedaIzquierda.setPosition(float(noventaGrados))
+        girar (1)
             
         print("Diferencia del encoder:", encoderDerecho.getValue() - noventaGrados)
         
         if (abs(encoderDerecho.getValue() - noventaGrados) < 0.01):
-            avanzar (0)
-            girar(0)
             estado="estado_1"
