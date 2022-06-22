@@ -17,8 +17,8 @@ robot.step(timeStep)
 
 startX = gps.getValues()[0]/tilesize
 startY = gps.getValues()[2]/tilesize
-destino_x = 5.0
-destino_y = -2.0
+destino_x = 9.6
+destino_y = -0.2
 
 noventaGrados = 2.3
 
@@ -44,8 +44,9 @@ def girar(vel):
     ruedaDerecha.setVelocity(vel)
 
 contador = 0
+fin = 1
 
-encoder_inicial = noventaGrados
+encoder_goal = noventaGrados #es el próximo valor que deseamos alcanzar en la siguiente rotación
 
 estado="estado_0"
 
@@ -54,14 +55,11 @@ while robot.step(timeStep) != -1:
     x = round(gps.getValues()[0]/tilesize - startX, 1 )
     y = round(gps.getValues()[2]/tilesize - startY, 1 )
 
-    print (x, " ", y)
     encoder_actual = encoderDerecho.getValue()
     
     if estado == "estado_0":
-        ruedaDerecha.setPosition(float(noventaGrados))
         girar(0.5)
-        print("Diferencia del encoder:", encoderDerecho.getValue() - encoder_inicial)
-        if(abs(encoderDerecho.getValue() - noventaGrados) < 0.01):
+        if(abs(encoder_actual - encoder_goal) < 0.01):
             ruedaDerecha.setPosition(float('inf'))
             contador += 1
             estado = "estado_1"
@@ -71,25 +69,23 @@ while robot.step(timeStep) != -1:
         
         if distance > tilesize/2:
             avanzar(1)
-
-            if (abs(x - destino_x) < 0.01) and (abs(y - destino_y) < 0.01):
+            if (abs(x - destino_x) < 0.2) and (abs(y - destino_y) < 0.2) and fin==1:
+                fin = 0
+                encoder_goal = encoder_actual + noventaGrados
                 estado = "estado_0"
         
         else:
             avanzar(0)
-            
             if contador == 1 or contador == 5:
-                #encoder_inicial = 
+                encoder_goal = encoder_actual + noventaGrados
                 estado = "estado_0"
-           
             elif contador > 1 and contador < 5:
+                encoder_goal = encoder_actual - noventaGrados
                 estado = "estado_2"
     
     elif estado == "estado_2":
-        ruedaDerecha.setPosition(float(noventaGrados))
         girar(-0.5)
-
-        if(abs(encoderDerecho.getValue() - noventaGrados) < 0.01):
+        if(abs(encoder_actual - encoder_goal) < 0.01):
             ruedaDerecha.setPosition(float('inf'))
             contador += 1
             estado = "estado_1"
