@@ -1,0 +1,35 @@
+[se inicializan todas las variables]
+
+estado=estado2
+
+def avanzar (vel):
+    ruedaIzquierda.setVelocity(vel)
+    ruedaDerecha.setVelocity(vel)
+
+def girar (vel):
+    ruedaIzquierda.setVelocity(-vel)
+    ruedaDerecha.setVelocity(vel)
+
+while robot.step(timestep) != -1:
+
+        if estado==estado2:
+            ruedaIzquierda.setPosition(float(noventaGrados))
+            girar (1)
+            
+            if (abs(encoderDerecho.getValue() - noventaGrados) < 0.01):
+                girar (0)
+            
+            elif distancia>media casilla:
+                estado=estado1
+            
+            else:
+                print("Warning")
+        
+        elif estado==estado1:
+            avanzar (1)
+            
+            if distancia<media casilla:
+                estado=estado2
+
+contador al terminar de girar
+    (en cambio de estado)
