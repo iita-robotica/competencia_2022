@@ -43,12 +43,12 @@ def girar(vel):
     ruedaIzquierda.setVelocity(-vel)
     ruedaDerecha.setVelocity(vel)
 
-contador = 0
-fin = 1
+contador_giro = 0 # determina el sentido (ver gráfico)
+bloqueo_ciclo = 1 # evita un retorno de la función (línea 75)
 
-encoder_goal = noventaGrados #es el próximo valor que deseamos alcanzar en la siguiente rotación
+encoder_goal = noventaGrados # es el próximo valor que deseamos alcanzar en la siguiente rotación
 
-estado="estado_0"
+estado="giro_derecha"
 
 while robot.step(timeStep) != -1:
 
@@ -57,38 +57,38 @@ while robot.step(timeStep) != -1:
 
     encoder_actual = encoderDerecho.getValue()
     
-    if estado == "estado_0":
+    if estado == "giro_derecha":
         girar(0.5)
         if(abs(encoder_actual - encoder_goal) < 0.01):
             ruedaDerecha.setPosition(float('inf'))
-            contador += 1
-            estado = "estado_1"
+            contador_giro += 1
+            estado = "avanzar"
 
-    elif estado == "estado_1":
+    elif estado == "avanzar":
         distance = distance_sensor1.getValue()
         
         if distance > tilesize/2:
             avanzar(1)
-            if (abs(x - destino_x) < 0.2) and (abs(y - destino_y) < 0.2) and fin==1:
-                fin = 0
+            if (abs(x - destino_x) < 0.2) and (abs(y - destino_y) < 0.2) and bloqueo_ciclo==1: # esto sucede en la parte final (previo a 3)
+                bloqueo_ciclo = 0
                 encoder_goal = encoder_actual + noventaGrados
-                estado = "estado_0"
+                estado = "giro_derecha"
         
         else:
             avanzar(0)
-            if contador == 1 or contador == 5:
-                encoder_goal = encoder_actual + noventaGrados
-                estado = "estado_0"
-            elif contador > 1 and contador < 5:
-                encoder_goal = encoder_actual - noventaGrados
-                estado = "estado_2"
+            if contador_giro == 1 or contador_giro == 5:
+                encoder_goal = encoder_actual + noventaGrados # actualización del encoder al nuevo valor deseado (el encoder va subiendo)
+                estado = "giro_derecha"
+            elif contador_giro > 1 and contador_giro < 5:
+                encoder_goal = encoder_actual - noventaGrados # al ser un giro a la izquierda, el signo es contrario
+                estado = "giro_izquierda"
     
-    elif estado == "estado_2":
+    elif estado == "giro_izquierda":
         girar(-0.5)
         if(abs(encoder_actual - encoder_goal) < 0.01):
             ruedaDerecha.setPosition(float('inf'))
-            contador += 1
-            estado = "estado_1"
+            contador_giro += 1
+            estado = "avanzar"
 
     else:
         print("Error inesperado")
