@@ -18,3 +18,6 @@ while robot.step(timestep) != -1:
     b = colorSensor.imageGetBlue(image, 1, 0, 0)
 
     print("r: " + str(r) + " g: " + str(g) + " b: " + str(b))
+    # Ejemplo para detectar cuando estamos en el pantano (baldoza marron)
+    if ( 210 <= r  <= 240) and  (180 <= g <= 210) and (100 <= b <= 130):
+        print("Estoy en el cuadrado marron")
