@@ -10,6 +10,10 @@ timeStep = 32
 
 # Longitud de la baldoza
 tilesize = 0.06
+media_baldoza = tilesize/2
+
+# Defino margenes
+margen_de_giro = 0.01
 
 # Cargamos el controlador del gps
 gps = robot.getDevice("gps")
@@ -47,8 +51,15 @@ encoderIzquierdo.enable(timeStep)
 encoderDerecho.enable(timeStep)
 
 # Inicializo sensor de distancia
-distance_sensor1 = robot.getDevice("distance sensor1")
-distance_sensor1.enable(timeStep)
+distancia_frontal = robot.getDevice("distance sensor1")
+distancia_frontal.enable(timeStep)
+distancia_lateral = robot.getDevice("distance sensor2")
+distancia_lateral.enable(timeStep)
+
+
+# Step 2: Inicializo el sensor de color
+colorSensor = robot.getDevice("colour_sensor")
+colorSensor.enable(timeStep)
 
 # Metodos/funciones utiles para mi programa
 def avanzar(vel):
@@ -59,6 +70,13 @@ def girar(vel):
     ruedaIzquierda.setVelocity(-vel)
     ruedaDerecha.setVelocity(vel)
 
+def proxima_baldoza_es_un_hueco(imagen):
+    # Clasifico el codigo de color en RGB
+    r = colorSensor.imageGetRed(imagen, 1, 0, 0)
+    g = colorSensor.imageGetGreen(imagen, 1, 0, 0)
+    b = colorSensor.imageGetBlue(imagen, 1, 0, 0)
+    # TODO: Buscar los margenes para en rgb para el hueco
+    return ( 210 <= r  <= 240) and  (180 <= g <= 210) and (100 <= b <= 130)
 
 contador_giro = 0 # determina el sentido (ver gráfico)
 # Se usa para realizar un cambio de estado cuando estamos
@@ -67,25 +85,58 @@ bloqueo_ciclo = 1 # evita un retorno de la función (línea 91)
 
 encoder_goal = noventaGrados # es el próximo valor que deseamos alcanzar en la siguiente rotación
 
-estado="giro_derecha" # Estado inicial
+estado="avanzar" # Estado inicial
 
 while robot.step(timeStep) != -1:
 
-    # Actualizacion del entorno:
-        # Encoder
-        # Sensores de distancia
+    # Actualizo el valor del encoder
+    encoder_actual = encoderDerecho.getValue()
+    # Actualizo el sensores de distancia
+    dis_frontal = distancia_frontal.getValue()
+    dis_lateral = distancia_lateral.getValue()
+    # Actualizo los valores del sensor de color
+    imagen = colorSensor.getImage()
 
-    # Estados:
-        # 1. Avanzar
-            # Cambio de etado:
-                # Proximo a chocar una pared -> Usa sensor distancia
-                # Validar proxima baldoza no sea un hueco -> Sensor Color
-            # Proximo estado:
-                # Girar -> Izq o Der
-            # Acciones:
-                #  Avanzar
-        # 2. Girar a la derecha
-                # ........ Agregar pseudocodigo .....
+
+
+    if estado == "avanzar":
+        # Acciones:
+        avanzar(1)
+
+        # Cambio de etado:
+        # Proximo a chocar una pared o hay un hueco en la proxima baldoza
+        if dis_frontal < media_baldoza or proxima_baldoza_es_un_hueco(imagen):
+            estado = "giro"
+
+    # 2. Girar a la derecha
+    elif estado == "giro_izquierda":
+        # Accion: girar a la izquierda
+        girar(-0.5)
+
+        # Cambio de estado?
+        # Cuando completa el giro de los 90 grados a la izquierda
+        if(abs(encoder_actual - encoder_goal) < margen_de_giro):
+            estado = "avanzar"
+
+    # 2. Girar
+    elif estado == "giro":
+        # Cuando completa el giro de los 90 grados a la izquierda
+
+        # Giro a la izquierda si a la derecha hay pared
+        if dis_lateral < media_baldoza:
+            # Actualizo valor del encoder para un giro de 90 grados a la izquierda
+            encoder_goal = encoder_actual - noventaGrados
+            girar(-0.5)
+        else:
+            # Actualizo valor del encoder para un giro de 90 grados a la derecha
+            encoder_goal = encoder_actual + noventaGrados
+            girar(0.5)
+
+        if(abs(encoder_actual - encoder_goal) < margen_de_giro):
+            estado = "avanzar"
+
+
+# TODO: Encontrar porque el robot queda bloqueado cuando esta girando cerca  del pantano!
 
 
 
