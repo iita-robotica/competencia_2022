@@ -96,47 +96,61 @@ while robot.step(timeStep) != -1:
     dis_lateral = distancia_lateral.getValue()
     # Actualizo los valores del sensor de color
     imagen = colorSensor.getImage()
+    # Actualizo valores de GPS
+    x = round(gps.getValues()[0]/tilesize - startX, 1 )
+    y = round(gps.getValues()[2]/tilesize - startY, 1 )
 
-
+    print(f'(x,y)= ({x},{y}')
 
     if estado == "avanzar":
         # Acciones:
-        avanzar(1)
+        avanzar(1,0.01)
 
         # Cambio de etado:
         # Proximo a chocar una pared o hay un hueco en la proxima baldoza
         if dis_frontal < media_baldoza or proxima_baldoza_es_un_hueco(imagen):
             estado = "giro"
-
-    # 2. Girar a la derecha
-    elif estado == "giro_izquierda":
-        # Accion: girar a la izquierda
-        girar(-0.5)
-
-        # Cambio de estado?
-        # Cuando completa el giro de los 90 grados a la izquierda
-        if(abs(encoder_actual - encoder_goal) < margen_de_giro):
-            estado = "avanzar"
+            # Giro a la izquierda si a la derecha hay pared
+            if dis_lateral < media_baldoza:
+                # Actualizo valor del encoder para un giro de 90 grados a la izquierda
+                encoder_goal = encoder_actual - noventaGrados
+                girar(-0.5)
+            else:
+                # Actualizo valor del encoder para un giro de 90 grados a la derecha
+                encoder_goal = encoder_actual + noventaGrados
+                girar(0.5)
 
     # 2. Girar
     elif estado == "giro":
         # Cuando completa el giro de los 90 grados a la izquierda
-
-        # Giro a la izquierda si a la derecha hay pared
-        if dis_lateral < media_baldoza:
-            # Actualizo valor del encoder para un giro de 90 grados a la izquierda
-            encoder_goal = encoder_actual - noventaGrados
-            girar(-0.5)
-        else:
-            # Actualizo valor del encoder para un giro de 90 grados a la derecha
-            encoder_goal = encoder_actual + noventaGrados
-            girar(0.5)
-
         if(abs(encoder_actual - encoder_goal) < margen_de_giro):
             estado = "avanzar"
 
 
-# TODO: Encontrar porque el robot queda bloqueado cuando esta girando cerca  del pantano!
+# TODO(lchico/tarea_proxima_clase_22_11_22):
+    # Resolver como avanzar en forma recta sobre alguno de los ejes (x o y)
+    # Es decir debemos corregir luego de un giro que el desplazamiento vaya sobre un unico eje.
+
+
+
+# Nota:
+# 1. Definir la condicion de giro dentro del mismo esta en el que giramos
+# 2. Crear un nuevo estado donde seleccionamos el sentido del giro y luego cambiamos al estado de giro
+
+
+# TODO:(lchico/tarea_proxima_clase_15_11_22) Encontrar porque el robot queda bloqueado cuando esta girando cerca  del pantano!
+# 1. Gerardo ->
+#     a) linea 129  -> estados repetidos
+# 2. Ian:
+#   a) El estado giro izquierda esta de mas
+#   b) Comparacion del encoder
+#   c) Argumento del color
+# 3. Ignacio:
+#   a) Problema del giro no esta solo con el pantano
+#   b) Gira de mas
+#   c) Giro indefinido para un lado y para el otro
+# 4. Maximo:
+#   a)
 
 
 
