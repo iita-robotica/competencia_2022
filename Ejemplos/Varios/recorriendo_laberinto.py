@@ -3,6 +3,7 @@ from controller import GPS
 from controller import Motor
 from controller import PositionSensor
 from controller import DistanceSensor
+import math
 
 robot = Robot()
 
@@ -62,13 +63,27 @@ colorSensor = robot.getDevice("colour_sensor")
 colorSensor.enable(timeStep)
 
 # Metodos/funciones utiles para mi programa
-def avanzar(vel):
-    ruedaIzquierda.setVelocity(vel)
-    ruedaDerecha.setVelocity(vel)
+def avanzar(vx, vy):
+    ruedaIzquierda.setVelocity(vx)
+    ruedaDerecha.setVelocity(vy)
 
 def girar(vel):
     ruedaIzquierda.setVelocity(-vel)
     ruedaDerecha.setVelocity(vel)
+
+# Ir  a la meta
+def go_to_gaol(x1,x,y1,y):
+    # delta x
+    # delta y
+    # alfa = arctg (delta x / delta y)
+    if (y1-y) != 0:
+        alpha = math.atan2((x1-x),(y1-y))
+    else:
+        alpha = 0
+
+    # avanzar(vx*fx, vy*fy))
+    return alpha
+    # pass
 
 def proxima_baldoza_es_un_hueco(imagen):
     # Clasifico el codigo de color en RGB
@@ -96,15 +111,24 @@ while robot.step(timeStep) != -1:
     dis_lateral = distancia_lateral.getValue()
     # Actualizo los valores del sensor de color
     imagen = colorSensor.getImage()
-    # Actualizo valores de GPS
+    # Actualizo valores de GPS traducidos en baldozas
     x = round(gps.getValues()[0]/tilesize - startX, 1 )
     y = round(gps.getValues()[2]/tilesize - startY, 1 )
 
+
+    print("Alfa: ", go_to_gaol(0,x,1,y))
     print(f'(x,y)= ({x},{y}')
+
+    # si llegue a la meta
+        # definir proxima meta
+    # sino
+        # sigo hacie la meta
+
+
 
     if estado == "avanzar":
         # Acciones:
-        avanzar(1,0.01)
+        avanzar(0.5,0.5)
 
         # Cambio de etado:
         # Proximo a chocar una pared o hay un hueco en la proxima baldoza
