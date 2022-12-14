@@ -29,6 +29,12 @@ robot.step(timeStep)
 startX = gps.getValues()[0]/tilesize
 startY = gps.getValues()[2]/tilesize
 
+# Defino la posision global en x,y
+x = 0
+x1 = 0
+y = 0
+y1 = 0
+
 # Coordenadas del punto 3 de la imagen del ejercicio 3
 destino_x = 9.6
 destino_y = -0.2
@@ -102,6 +108,33 @@ encoder_goal = noventaGrados # es el próximo valor que deseamos alcanzar en la 
 
 estado="avanzar" # Estado inicial
 
+
+# Corrige el angulo introducido por si se pasa de 360 o es mas bajo que 0
+def normalizoAngulo(ang):
+    ang = ang % 360
+    # Si es mas bajo que 0 grados, le resta ese valor a 360
+    if ang < 0:
+        ang += 360
+    return ang
+
+def get_angle():
+    global x
+    global y
+    global x1
+    global y1
+    global angulo
+
+    # Estos valores deben ser distintos ya que estamos calculando el angulo utilizando el gps
+    if x1 != x or y1 != y:
+        print(f'Valores de la posicion inicial y final: (x, x1 , y, y1) : {x}, {x1}, {y}, {y1}')
+        angulo = math.atan2(y-y1,x-x1) * 180/math.pi
+        print(f'Current Angle:  {math.atan2(y-y1,x-x1)} rad to deg: {angulo}')
+
+    return angulo
+
+counter = 0
+angulo = 0
+
 while robot.step(timeStep) != -1:
 
     # Actualizo el valor del encoder
@@ -116,18 +149,26 @@ while robot.step(timeStep) != -1:
     y = round(gps.getValues()[2]/tilesize - startY, 1 )
 
 
-    print("Alfa: ", go_to_gaol(0,x,1,y))
-    print(f'(x,y)= ({x},{y}')
 
-    # si llegue a la meta
-        # definir proxima meta
-    # sino
-        # sigo hacie la meta
+    counter += 1
+    # print(f'Counter value: {counter}')
+
+    if counter % 110 == 0 :
+        # print(f'Valores de la posicion inicial y final: (x, x1 , y, y1) : {x}, {x1}, {y}, {y1}')
+        get_angle()
+        x1 = x
+        y1 = y
+        counter %= 5
 
 
 
     if estado == "avanzar":
-        # Acciones:
+        # Acciones: -> Tarea validar desfasaje entre el angulo de orientacion y los angulos permitidos
+        # para luego modificar la velocidad de las ruedas y corregir el desfasaje.
+        if angulo not in [0, 90, 180, 270]:
+            valor_proximo = min([0, 90, 180, 270], key=angulo)
+            print(f'Valor mas proximo a mi angulo deseado: {valor_proximo}')
+
         avanzar(0.5,0.5)
 
         # Cambio de etado:
