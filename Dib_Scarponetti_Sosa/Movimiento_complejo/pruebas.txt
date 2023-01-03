@@ -1,0 +1,38 @@
+if estado == estado_1:
+    robot avanza
+    posicion1 del robot
+    
+    if pared:
+        estado = estado_2
+
+elif estado == estado_2:
+    robot gira
+    posicion2 del robot
+
+    if giro completo:
+        estado = estado_1
+
+
+
+
+longitud_real = (x2 - x1 ; y2 - y1)
+
+if (x2 - x1) > (y2 - y1):
+    y3 = corregir y (redondear el valor de y2)
+
+    longitud_estimada = (x2 - x1 ; y3 - y1)
+
+
+else:
+    x3 = corregir y (redondear el valor de x2)
+
+    longitud_estimada = (x3 - x1 ; y2 - y1)
+
+
+angulo_desfase = cos^-1(longitud_estimada : longitud_real)
+
+
+
+#arreglar desfase:
+
+encoder_goal = 90 - angulo_desfase
