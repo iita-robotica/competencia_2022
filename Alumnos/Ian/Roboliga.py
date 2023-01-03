@@ -78,9 +78,6 @@ def danger(image):
     return ( 210 <= r <= 240) and (180 <= g <= 210) and (100 <= b <= 130)
 
 
-turn_counter = 0 
-cicle_prevention = 1
-
 encoder_goal = encoder 
 
 state = "advance"
