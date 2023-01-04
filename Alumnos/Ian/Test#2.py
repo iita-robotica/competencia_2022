@@ -55,8 +55,6 @@ state = "advance"
 counter = 0
 
 angulo = 0
-angulo_posible = [0, 45, 90, 135, 180, 215, 270, 315]
-diff = False
 
 
 def advance(vx, vy):
@@ -82,11 +80,6 @@ def angle_normalizer(ang):
     if ang < 0:
         ang += 360
     return ang
-
-def angle_diff():
-    if abs((angulo-0)or(angulo-45)or(angulo-90)or(angulo-135)or(angulo-180)) > 5:
-        diff = True
-    return diff
 
 def danger(image):
     r = colorSensor.imageGetRed(image, 1, 0, 0)
@@ -119,9 +112,7 @@ while robot.step(timeStep) != -1:
 
     if state == "advance":
         print(angulo)
-        angle_diff()
-        if angulo not in angulo_posible and diff == True:
-            print("corrijo")
+        if angulo not in [0, 45, 90, 135, 180, 215, 270, 315]:
             advance(0.5,0.45)
             #valor_proximo = min([0, 90, 180, 270], key=angulo)
             #print(f'Valor mas proximo a mi angulo deseado: {valor_proximo}')
