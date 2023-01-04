@@ -91,6 +91,7 @@ def danger(image):
 
 while robot.step(timeStep) != -1:
     encoder_actual = encoderDerecho.getValue()
+    print(encoder_actual)
 
     dis_frontal = distancia_frontal.getValue()
     dis_lateral = distancia_lateral.getValue()
