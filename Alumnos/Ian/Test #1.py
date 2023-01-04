@@ -75,7 +75,7 @@ def danger(image):
     g = colorSensor.imageGetGreen(image, 1, 0, 0)
     b = colorSensor.imageGetBlue(image, 1, 0, 0)
     #Buscar los margenes para en rgb para el hueco
-    return ( 210 <= r <= 240) and (180 <= g <= 210) and (100 <= b <= 130)
+    return (210 <= r <= 240) and (180 <= g <= 210) and (100 <= b <= 130)
 
 
 encoder_goal = encoder 
@@ -96,19 +96,20 @@ def get_angle():
     global y1
     global angulo
     if x1 != x or y1 != y:
-        #print(f'Valores de la posicion inicial y final: (x, x1 , y, y1) : {x}, {x1}, {y}, {y1}')
+        print(f'Valores de la posicion inicial y final: (x, x1 , y, y1) : {x}, {x1}, {y}, {y1}')
         angulo = math.atan2(y-y1,x-x1) * 180/math.pi
-        #print(f'Current Angle:  {math.atan2(y-y1,x-x1)} rad to deg: {angulo}')
+        print(f'Current Angle:  {math.atan2(y-y1,x-x1)} rad to deg: {angulo}')
     return angulo
 
 
 counter = 0
 angulo = 0
-
+diff = 0
 
 
 while robot.step(timeStep) != -1:
     encoder_actual = encoderDerecho.getValue()
+    diff = ((angulo * 2.3) / 90)
 
     dis_frontal = distancia_frontal.getValue()
     dis_lateral = distancia_lateral.getValue()
@@ -119,11 +120,11 @@ while robot.step(timeStep) != -1:
     y = round(gps.getValues()[2]/tilesize - startY, 1 )
 
     counter += 1
-    #print(f'Counter value: {counter}')
+    print(f'Counter value: {counter}')
 
 
     if counter % 110 == 0 :
-        #print(f'Valores de la posicion inicial y final: (x, x1 , y, y1) : {x}, {x1}, {y}, {y1}')
+        print(f'Valores de la posicion inicial y final: (x, x1 , y, y1) : {x}, {x1}, {y}, {y1}')
         get_angle()
         x1 = x
         y1 = y
@@ -132,18 +133,26 @@ while robot.step(timeStep) != -1:
 
     if state == "advance":
 
-        if angulo not in [0, 90, 180, 270]:
-            valor_proximo = min([0, 90, 180, 270], key=angulo)
+        if angulo not in [-90, 0, 90, 180, 270]:
+            #encoder_actual += diff
+            print('caso a')
+            #valor_proximo = min([0, 90, 180, 270], key=angulo)
             #print(f'Valor mas proximo a mi angulo deseado: {valor_proximo}')
         advance(0.5,0.5)
 
-        if dis_frontal < half_tilesize or danger(image):
+        if (dis_frontal < half_tilesize) or danger(image):
             state = "turn"
             if dis_lateral < half_tilesize:
-                encoder_goal = encoder_actual - encoder
+                if angulo not in [-90, 0, 90, 180, 270]:
+                    encoder_goal = encoder_actual - encoder + diff
+                else:
+                    encoder_goal = encoder_actual - encoder
                 turn(-0.5)
             else:
-                encoder_goal = encoder_actual + encoder
+                if angulo not in [-90, 0, 90, 180, 270]:
+                    encoder_goal = encoder_actual + encoder - diff
+                else:
+                    encoder_goal = encoder_actual + encoder
                 turn(0.5)
 
     elif state == "turn":
