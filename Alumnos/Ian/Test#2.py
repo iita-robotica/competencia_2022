@@ -55,6 +55,7 @@ state = "advance"
 counter = 0
 
 angulo = 0
+angulo_posible = [0, 45, 90]
 
 
 def advance(vx, vy):
@@ -71,8 +72,10 @@ def get_angle():
     global x1
     global y1
     global angulo
-    if x1 != x or y1 != y:
+    if x1 != x and y1 != y:
         angulo = math.atan2(abs(y1-y),abs(x1-x)) * 180/math.pi
+    else:
+        angulo = 0
     return angulo
 
 def angle_normalizer(ang):
@@ -112,10 +115,13 @@ while robot.step(timeStep) != -1:
 
     if state == "advance":
         print(angulo)
-        if angulo not in [0, 45, 90, 135, 180, 215, 270, 315]:
-            advance(0.5,0.45)
-            #valor_proximo = min([0, 90, 180, 270], key=angulo)
-            #print(f'Valor mas proximo a mi angulo deseado: {valor_proximo}')
+        if angulo not in angulo_posible:
+            if angulo <= 25 and (25-angulo) < 5:
+                advance(0.5,0.48)
+            elif 25 < angulo <= 75 and (75-angulo) < 5:
+                advance(0.5,0.48)
+            #else:
+                #advance(0.5,0.48)
         else:
             advance(0.5,0.5)
             
@@ -129,11 +135,8 @@ while robot.step(timeStep) != -1:
                 turn(0.5)
 
     elif state == "turn":
+        angulo = 0
         if(abs(encoder_actual - encoder_goal) < turn_range):
             state = "advance"
 
-
-
-    # Resolver como advance en forma recta sobre alguno de los ejes (x o y)
-    # Es decir debemos corregir luego de un turn que el desplazamiento vaya sobre un unico eje.
     

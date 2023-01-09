@@ -72,7 +72,7 @@ def get_angle():
     global y1
     global angulo
     if x1 != x or y1 != y:
-        angulo = math.atan2(y1-y,x1-x) * 180/math.pi
+        angulo = math.atan2(abs(y1-y),abs(x1-x)) * 180/math.pi
     return angulo
 
 def angle_normalizer(ang):
@@ -113,7 +113,7 @@ while robot.step(timeStep) != -1:
     if state == "advance":
         print(angulo)
         if angulo not in [0, 45, 90, 135, 180, 215, 270, 315]:
-            advance(0.5,0.5)
+            advance(0.5,0.45)
             #valor_proximo = min([0, 90, 180, 270], key=angulo)
             #print(f'Valor mas proximo a mi angulo deseado: {valor_proximo}')
         else:
