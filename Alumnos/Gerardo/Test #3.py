@@ -85,13 +85,16 @@ def danger(image):
     r = colorSensor.imageGetRed(image, 1, 0, 0)
     g = colorSensor.imageGetGreen(image, 1, 0, 0)
     b = colorSensor.imageGetBlue(image, 1, 0, 0)
-    #Buscar los margenes para en rgb para el hueco
-    return ( 210 <= r <= 240) and (180 <= g <= 210) and (100 <= b <= 130)
-
+    
+    #Reconocimiento de obstáculos
+    print(r, g, b)
+    if ( 210 <= r  <= 240) and  (180 <= g <= 210) and (100 <= b <= 130):
+        return True
+    elif (r <= 47) and (g <= 47) and (b <= 47):
+        return True
 
 while robot.step(timeStep) != -1:
     encoder_actual = encoderDerecho.getValue()
-    print(encoder_actual)
 
     dis_frontal = distancia_frontal.getValue()
     dis_lateral = distancia_lateral.getValue()
@@ -101,8 +104,9 @@ while robot.step(timeStep) != -1:
     x = round(gps.getValues()[0]/tilesize - startX, 1 )
     y = round(gps.getValues()[2]/tilesize - startY, 1 )
 
+    print(x, y)
+
     counter += 1
-    #print(f'Counter value: {counter}')
 
     if counter % 110 == 0 :
         #print(f'Valores de la posicion inicial y final: (x, x1 , y, y1) : {x}, {x1}, {y}, {y1}')
@@ -135,6 +139,4 @@ while robot.step(timeStep) != -1:
             state = "advance"
             encoder_actual = 45
 
-    # Resolver como advance en forma recta sobre alguno de los ejes (x o y)
-    # Es decir debemos corregir luego de un turn que el desplazamiento vaya sobre un unico eje.
     
