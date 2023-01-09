@@ -106,7 +106,7 @@
 	"Distance Sensor 1": {
 		"dictName": "Distance Sensor 1",
 		"name": "Distance Sensor",
-		"customName": "distance sensor 1",
+		"customName": "distance sensor1",
 		"type": "",
 		"x": 370,
 		"y": 0,
@@ -115,19 +115,6 @@
 		"ry": 0,
 		"rz": 0,
 		"a": 0
-	},
-	"Distance Sensor 2": {
-		"dictName": "Distance Sensor 2",
-		"name": "Distance Sensor",
-		"customName": "distance sensor 2",
-		"type": "",
-		"x": 0,
-		"y": 0,
-		"z": -370,
-		"rx": 0,
-		"ry": 1,
-		"rz": 0,
-		"a": 1.5707
 	},
 	"colsensor": {
 		"dictName": "colsensor",
