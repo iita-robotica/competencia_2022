@@ -55,7 +55,7 @@ state = "advance"
 counter = 0
 
 angulo = 0
-angulo_posible = [0, 45, 90, 135, 180]
+angulo_posible = [0, 45, 90]
 angulo_proximo = 0
 
 diff_max = 0
@@ -84,9 +84,9 @@ def get_angle():
     return angulo
 
 def angle_normalizer(ang):
-    ang = ang % 180
+    ang = ang % 90
     if ang < 0:
-        ang += 180
+        ang += 90
     return ang
 
 def danger(image):
@@ -97,6 +97,7 @@ def danger(image):
         return True
     elif (r <= 47) and (g <= 47) and (b <= 47):
         return True
+
 
 while robot.step(timeStep) != -1:
     encoder_actual = encoderDerecho.getValue()
@@ -109,10 +110,15 @@ while robot.step(timeStep) != -1:
     x = round(gps.getValues()[0]/tilesize - startX, 1 )
     y = round(gps.getValues()[2]/tilesize - startY, 1 )
 
-    #angulo_proximo = valor mas cercano al angulo real de los de la lista posible
-    
-    diff_max = angulo + 20
-    diff_min = angulo - 20
+    if 0 <= angulo < 30:
+        angulo_proximo = 0
+    elif 30 <= angulo <= 60:
+        angulo_proximo = 45
+    elif 60 < angulo <= 90:
+        angulo_proximo = 90
+        
+    diff_max = angulo + 10
+    diff_min = angulo - 10
     prox_a = diff_max - angulo_proximo
     prox_b = diff_min - angulo_proximo
     
@@ -124,15 +130,15 @@ while robot.step(timeStep) != -1:
 
     if state == "advance":
         print(angulo)
-        #if angulo not in angulo_posible:
+        if angulo not in angulo_posible:
             #print("angle")
-            #if (diff_max <= angulo_proximo) or (angulo_proximo <= diff_min):
+            if (diff_max <= angulo_proximo) or (angulo_proximo <= diff_min):
                 #print("fix")
-                #advance(1,0.98)
-                #if (abs(prox_a) <= 15) or (abs(prox_b) <= 15):
-                    #angulo = 0
-        #else:
-        advance(1,1)
+                advance(1,1.1)
+                if (abs(prox_a) <= 5) or (abs(prox_b) <= 5):
+                    angulo = 0
+        else:
+            advance(1,1)
             
         if dis_frontal < half_tilesize or danger(image):
             state = "turn"
