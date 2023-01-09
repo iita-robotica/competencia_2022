@@ -9,7 +9,7 @@ robot = Robot()
 
 timeStep = 32
 
-tilesize = 0.06
+tilesize = 0.06 # Probar 0.10 | 0.9
 half_tilesize = tilesize/2
 
 gps = robot.getDevice("gps")
@@ -43,6 +43,8 @@ distancia_frontal = robot.getDevice("distance sensor1")
 distancia_frontal.enable(timeStep)
 distancia_lateral = robot.getDevice("distance sensor2")
 distancia_lateral.enable(timeStep)
+distancia_lateralIzq = robot.getDevice("distance sensor3")
+distancia_lateralIzq.enable(timeStep)
 
 colorSensor = robot.getDevice("colour_sensor")
 colorSensor.enable(timeStep)
@@ -56,6 +58,7 @@ counter = 0
 
 angulo = 0
 
+savedPlaces = []
 
 def advance(vx, vy):
     ruedaIzquierda.setVelocity(vx)
@@ -87,7 +90,6 @@ def danger(image):
     b = colorSensor.imageGetBlue(image, 1, 0, 0)
     
     #Reconocimiento de obstáculos
-    print(r, g, b)
     if ( 210 <= r  <= 240) and  (180 <= g <= 210) and (100 <= b <= 130):
         return True
     elif (r <= 47) and (g <= 47) and (b <= 47):
@@ -98,13 +100,14 @@ while robot.step(timeStep) != -1:
 
     dis_frontal = distancia_frontal.getValue()
     dis_lateral = distancia_lateral.getValue()
+    dis_latIzq = distancia_lateralIzq.getValue()
+
+    print(f'Frontal = {dis_frontal:.3f}, Derecha = {dis_lateral:.3f}, Izquierda = {dis_latIzq:.3f}')
 
     image = colorSensor.getImage()
 
     x = round(gps.getValues()[0]/tilesize - startX, 1 )
     y = round(gps.getValues()[2]/tilesize - startY, 1 )
-
-    print(x, y)
 
     counter += 1
 
@@ -129,6 +132,7 @@ while robot.step(timeStep) != -1:
             if dis_lateral < half_tilesize:
                 encoder_goal = encoder_actual - encoder
                 turn(-0.5)
+                savedPlaces.append((x,y))
             else:
                 encoder_goal = encoder_actual + encoder
                 turn(0.5)
