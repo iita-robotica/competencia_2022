@@ -10,7 +10,7 @@ robot = Robot()
 timeStep = 32
 
 tilesize = 0.06
-half_tilesize = tilesize/2
+tilesize_detection = tilesize/2
 
 gps = robot.getDevice("gps")
 gps.enable(timeStep)
@@ -134,15 +134,15 @@ while robot.step(timeStep) != -1:
             #print("angle")
             if (diff_max <= angulo_proximo) or (angulo_proximo <= diff_min):
                 #print("fix")
-                advance(1,1.1)
+                advance(1,1.05)
                 if (abs(prox_a) <= 5) or (abs(prox_b) <= 5):
                     angulo = 0
         else:
             advance(1,1)
             
-        if dis_frontal < half_tilesize or danger(image):
+        if dis_frontal < tilesize_detection or danger(image):
             state = "turn"
-            if dis_lateral < half_tilesize:
+            if dis_lateral < tilesize_detection:
                 encoder_goal = encoder_actual - encoder
                 turn(-0.5)
             else:
