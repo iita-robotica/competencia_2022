@@ -134,6 +134,7 @@ while robot.step(timeStep) != -1:
             #print("angle")
             if (diff_max <= angulo_proximo) or (angulo_proximo <= diff_min):
                 #print("fix")
+                #analizar hacia que lado gira
                 advance(1,1.05)
                 if (abs(prox_a) <= 5) or (abs(prox_b) <= 5):
                     angulo = 0
