@@ -102,7 +102,7 @@ while robot.step(timeStep) != -1:
     dis_lateral = distancia_lateral.getValue()
     dis_latIzq = distancia_lateralIzq.getValue()
 
-    print(f'Frontal = {dis_frontal:.3f}, Derecha = {dis_lateral:.3f}, Izquierda = {dis_latIzq:.3f}')
+    # print(f'Frontal = {dis_frontal:.3f}, Derecha = {dis_lateral:.3f}, Izquierda = {dis_latIzq:.3f}')
 
     image = colorSensor.getImage()
 
@@ -138,9 +138,6 @@ while robot.step(timeStep) != -1:
                 turn(0.5)
 
     elif state == "turn":
-        # print("Valores: ", encoderDerecho.getValue(), encoderIzquierdo.getValue())
         if(abs(encoder_actual - encoder_goal) < turn_range):
             state = "advance"
             encoder_actual = 45
-
-    
