@@ -7,14 +7,14 @@
         global proximaTile
 
         if cardinal == 'north':
-            proximaTile -= 2
+            proximaTile = proximaTile - 2
         elif cardinal == 'south':
-            proximaTile += 2
+            proximaTile = proximaTile + 2
     
 ## Código dentro del loop
     '''Permite comprobar si es necesario calcular la proxima posición'''
 
     if y == proximaTile:
-                calcNextTile(y)
+                calcNextTile(y) #
             else:
                 advance(2,2)
