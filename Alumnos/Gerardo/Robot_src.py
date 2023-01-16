@@ -248,6 +248,4 @@ while robot.step(timeStep) != -1:
             state = "advance"
             angle = 0
 
-
-#determinar cada cuanos valores del gps se avanza una casilla
 #norte o este suma uno a la columa o fila, sur u este resta uno a la columna o fila
