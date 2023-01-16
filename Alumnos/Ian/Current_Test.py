@@ -300,3 +300,9 @@ while robot.step(timeStep) != -1:
             state = "advance"
             encoder_actual = 45
 
+
+
+
+
+#Mapeo:
+#https://jarroba.com/mapeo-mapping-y-mapeo-mutable-mutablemapping-en-python/
