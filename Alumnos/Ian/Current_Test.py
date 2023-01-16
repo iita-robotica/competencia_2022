@@ -16,9 +16,9 @@ robot.step(timeStep)
 gps = robot.getDevice("gps")
 gps.enable(timeStep)
 
-ruedaIzquierda = robot.getDevice("wheel1 motor")
+ruedaIzquierda = robot.getDevice("wheel_1 motor")
 ruedaIzquierda.setPosition(float('inf'))
-ruedaDerecha = robot.getDevice("wheel2 motor")
+ruedaDerecha = robot.getDevice("wheel_2 motor")
 ruedaDerecha.setPosition(float('inf'))
 
 encoderIzquierdo = ruedaIzquierda.getPositionSensor()
@@ -26,9 +26,9 @@ encoderIzquierdo.enable(timeStep)
 encoderDerecho = ruedaDerecha.getPositionSensor()
 encoderDerecho.enable(timeStep)
 
-distancia_frontal = robot.getDevice("distance sensor1")
+distancia_frontal = robot.getDevice("distance_sensor_2")
 distancia_frontal.enable(timeStep)
-distancia_lateral = robot.getDevice("distance sensor2")
+distancia_lateral = robot.getDevice("distance_sensor_1")
 distancia_lateral.enable(timeStep)
 
 colorSensor = robot.getDevice("colour_sensor")
@@ -39,9 +39,6 @@ colorSensor.enable(timeStep)
 
 tilesize = 0.06
 tilesize_detection = tilesize/2
-
-startX = gps.getValues()[0]/tilesize
-startY = gps.getValues()[2]/tilesize
 
 turn_range = 0.01
 turn_counter = 0
@@ -77,7 +74,7 @@ row = 0
 row_max = 0
 row_min = 0
 row_total = 0
-#rows = []
+rows = []
 
 point = 0
 cardinal = "north"
@@ -99,8 +96,8 @@ def get_angle():
     global x1
     global y1
     global angulo
-    if x1 != x and y1 != y:
-        angle = math.atan2(abs(y1-y),abs(x1-x)) * 180/math.pi
+    if x != x1 and y != y1:
+        angle = math.atan2(abs(y-1),abs(x-x1)) * 180/math.pi
     else:
         angle = 0
     return angle
@@ -134,9 +131,9 @@ while robot.step(timeStep) != -1:
     
     #Update movement variables
     
-    x = round(gps.getValues()[0]/tilesize - startX, 1 )
-    y = round(gps.getValues()[2]/tilesize - startY, 1 )
-    
+    x = round(gps.getValues()[0]/tilesize, 1)
+    y = round(gps.getValues()[2]/tilesize, 1)
+
     encoder_actual = encoderDerecho.getValue()
     
     if 0 <= angle < 30:
@@ -154,17 +151,17 @@ while robot.step(timeStep) != -1:
     
     #Update mapping variables
     
-    #if column_max < column:
-        #column_max = column
-    #elif column < column_min:
-        #column_min = column
-    #column_total = abs(column_min) + column_max
+    if column_max < column:
+        column_max = column
+    elif column < column_min:
+        column_min = column
+    column_total = abs(column_min) + column_max
         
-    #if row_max < row:
-        #row_max = row
-    #elif row < row_min:
-        #row_min = row
-    #row_total = abs(row_min) + row_max
+    if row_max < row:
+        row_max = row
+    elif row < row_min:
+        row_min = row
+    row_total = abs(row_min) + row_max
     
     if (4 <= point) or (point <= -5):
         point = 0
@@ -186,19 +183,20 @@ while robot.step(timeStep) != -1:
         counter %= 5
 
     if state == "advance":
-        print(angle)
+        #print("x:", x, " x1:", x1, " y:", y, " y1:", y1)
+        #print("angulo:", angle)
         if angle not in angle_permit:
             state = "advance_fix"
             if (diff_max <= angle_prox) or (angle_prox <= diff_min):
                 if turn_counter == 20:
                     turn_counter = 0
                     advance(1,0.97)
-                else:
-                    advance(1,1)
         else:
             advance(1,1)
             
         if dis_frontal < tilesize_detection or danger(image):
+            x1 = x
+            y1 = y
             state = "turn"
             if dis_lateral < tilesize_detection:
                 encoder_goal = encoder_actual - encoder
@@ -213,9 +211,9 @@ while robot.step(timeStep) != -1:
                 
         #print("punto=", point)
         #print(cardinal)
-        #for i in range(row_total):
-            #rows.append(row)
-        #rows_order = sorted(rows)
+        for i in range(row_total):
+            rows.append(row)
+        rows_order = sorted(rows)
         
     elif state == "turn":
         angle = 0
