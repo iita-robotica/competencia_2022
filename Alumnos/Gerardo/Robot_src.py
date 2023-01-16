@@ -37,7 +37,7 @@ colorSensor.enable(timeStep)
 
 #Start movement variables
 
-tilesize = 0.06
+tilesize = 0.07
 tilesize_detection = tilesize/2
 
 turn_range = 0.01
@@ -117,18 +117,32 @@ def danger(image):
     elif (r <= 47) and (g <= 47) and (b <= 47):
         return True
 
-nextTile = -3
+nextTileY = -3
+nextTileX = -3
 
-def calcNextTile(y):
+def calcNextTileY(y):
     '''Función para calcular la próxima baldoza'''
     global cardinal
-    global nextTile
+    global nextTileY
+    global nextTileX
 
     if state != "turn":
         if cardinal == 'north':
-            nextTile = nextTile - 2
+            nextTileY = nextTileY - 2
+            nextTileX = nextTileX + 1
         elif cardinal == 'south':
-            nextTile = nextTile + 2
+            nextTileY = nextTileY + 2
+            nextTileX = nextTileX - 2
+
+def calcNextTileX(x):
+    global cardinal
+    global nextTileX
+
+    if state != 'turn':
+        if cardinal == 'west':
+            nextTileX = nextTileX - 2
+        elif cardinal == 'east':
+            nextTileX = nextTileX + 1
 
 def setCardinal(actualPoint):
     global cardinal 
@@ -168,7 +182,7 @@ while robot.step(timeStep) != -1:
     diff_min = angle - 12
     
     counter += 1
-    
+    print(x)
     #Update mapping variables
     
     if column_max < column:
@@ -189,7 +203,7 @@ while robot.step(timeStep) != -1:
     #Initialize state machine
 
     print(cardinal)
-    print(nextTile)
+    print(f'ProxY = {nextTileY}, proxX = {nextTileX}')
 
     if counter % 110 == 0 :
         get_angle()
@@ -206,8 +220,10 @@ while robot.step(timeStep) != -1:
                     advance(1,0.97)
         else:
             setCardinal(point)
-            if y == nextTile:
-                calcNextTile(y)
+            if y == nextTileY:
+                calcNextTileY(y)
+            elif x == nextTileX:
+                calcNextTileX(x)
             else:
                 advance(1,1)
             
@@ -216,10 +232,14 @@ while robot.step(timeStep) != -1:
             y1 = y
             state = "turn"
             if cardinal == 'north':
-                nextTile = nextTile + 2
+                nextTileY = nextTileY + 2
             elif cardinal == 'south':
-                nextTile = nextTile - 2
-                
+                nextTileY = nextTileY - 2
+            elif cardinal == 'west':
+                nextTileX = nextTileX + 2
+            else:
+                nextTileX = nextTileX - 2
+
             if dis_lateral < tilesize_detection:
                 encoder_goal = encoder_actual - encoder
                 turn_counter += 1
@@ -248,4 +268,6 @@ while robot.step(timeStep) != -1:
             state = "advance"
             angle = 0
 
-#norte o este suma uno a la columa o fila, sur u este resta uno a la columna o fila.
+
+#determinar cada cuanos valores del gps se avanza una casilla
+#norte o este suma uno a la columa o fila, sur u este resta uno a la columna o fila
