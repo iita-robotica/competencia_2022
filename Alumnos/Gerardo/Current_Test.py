@@ -92,7 +92,6 @@ Mapping = {
     "Guardado": Checkpoint
 }
 
-
 # Start movement functions
 
 def advance(vx, vy):
@@ -117,10 +116,10 @@ def angle_normalizer(ang):
         ang += 90
     return ang
 
-
 # Start mapping functions
 
 def check_object(image):
+    '''Return the zone where is the robot'''
     r = colorSensor.imageGetRed(image, 1, 0, 0)
     g = colorSensor.imageGetGreen(image, 1, 0, 0)
     b = colorSensor.imageGetBlue(image, 1, 0, 0)
@@ -150,7 +149,7 @@ nextTileY = -3
 nextTileX = -3.5
 
 def calcNextTileY():
-    '''Función para calcular la próxima baldoza'''
+    '''Define the next tile on Y axis'''
     global cardinal
     global nextTileY
 
@@ -161,15 +160,18 @@ def calcNextTileY():
             nextTileY = nextTileY + 2
 
 def calcNextTileX(x):
+    '''Define the next tile on X axis'''
     global cardinal
     global nextTileX
 
-    if cardinal == 'east':
-        nextTileX = nextTileX + 2
-    elif cardinal == 'west':
-        nextTileX = nextTileX - 2
+    if state != 'turn':
+        if cardinal == 'east':
+            nextTileX = nextTileX + 2
+        elif cardinal == 'west':
+            nextTileX = nextTileX - 2
 
 def cardinalDefine(x, y):
+    '''Refresh cardinal values'''
     global cardinal
     global column
     global row
@@ -177,35 +179,33 @@ def cardinalDefine(x, y):
     global y1
 
     if x1 < x:
-            cardinal = "east"
-            if x - x1 >= 2:
-                row += 1
-                x1 = x
+        cardinal = "east"
+        if x - x1 >= 2:
+            row += 1
+            x1 = x
     elif x < x1:
-            cardinal = "west"
-            if x1 - x >= 2:
-                row -= 1
-                x1 = x
+        cardinal = "west"
+        if x1 - x >= 2:
+            row -= 1
+            x1 = x
     if y1 < y:
-            cardinal = "south"
-            if y - y1 >= 2:
-                column -= 1
-                y1 = y
+        cardinal = "south"
+        if y - y1 >= 2:
+            column -= 1
+            y1 = y
     elif y < y1:
-            cardinal = "north"
-            if y1 - y >= 2:
-                column += 1
-                y1 = y
+        cardinal = "north"
+        if y1 - y >= 2:
+            column += 1
+            y1 = y
 
 while robot.step(timeStep) != -1:
-    
     # Update robot & sensors
 
     dis_frontal = distancia_frontal.getValue()
     dis_lateral = distancia_lateral.getValue()
 
     image = colorSensor.getImage()
-    
     
     # Update movement variables
     
@@ -225,7 +225,6 @@ while robot.step(timeStep) != -1:
     diff_min = angle - 12
     
     counter += 1
-    
     
     # Update mapping variables
     
@@ -249,8 +248,6 @@ while robot.step(timeStep) != -1:
 
     if state == "advance":
         # print("columna:", column, " fila:", row)
-        print(cardinal)
-        
         if angle not in angle_permit:
             state = "advance_fix"
             if (diff_max <= angle_prox) or (angle_prox <= diff_min):
@@ -273,7 +270,6 @@ while robot.step(timeStep) != -1:
             print(Checkpoint) 
         
         if (dis_frontal < tilesize_detection) or (check_object(image)=="swamp") or (check_object(image)=="hole"):
-            
             x1 = x
             y1 = y
 
@@ -293,6 +289,7 @@ while robot.step(timeStep) != -1:
                 elif cardinal == "south":
                     Swamp.append((row, column -1))
                 #print(Swamp)
+
             elif check_object(image)=="hole":
                 #print("hole")
                 if cardinal == "east":
@@ -306,6 +303,7 @@ while robot.step(timeStep) != -1:
                 #print(Hole)
             
             state = "turn"
+
             if dis_lateral < tilesize_detection:
                 encoder_goal = encoder_actual - encoder
                 turn_counter += 1
@@ -320,10 +318,8 @@ while robot.step(timeStep) != -1:
             state = "advance"
             angle = 0
     
-    
     elif state == "turn":
         angle = 0
         if(abs(encoder_actual - encoder_goal) < turn_range):
             state = "advance"
             encoder_actual = 45
-
