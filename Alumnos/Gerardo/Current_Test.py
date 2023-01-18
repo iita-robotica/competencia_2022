@@ -169,6 +169,33 @@ def calcNextTileX(x):
     elif cardinal == 'west':
         nextTileX = nextTileX - 2
 
+def cardinalDefine(x, y):
+    global cardinal
+    global column
+    global row
+    global x1
+    global y1
+
+    if x1 < x:
+            cardinal = "east"
+            if x - x1 >= 2:
+                row += 1
+                x1 = x
+    elif x < x1:
+            cardinal = "west"
+            if x1 - x >= 2:
+                row -= 1
+                x1 = x
+    if y1 < y:
+            cardinal = "south"
+            if y - y1 >= 2:
+                column -= 1
+                y1 = y
+    elif y < y1:
+            cardinal = "north"
+            if y1 - y >= 2:
+                column += 1
+                y1 = y
 
 while robot.step(timeStep) != -1:
     
@@ -213,7 +240,6 @@ while robot.step(timeStep) != -1:
     elif row < row_min:
         row_min = row
     row_total = abs(row_min) + row_max
-        
     
     # Initialize state machine
 
@@ -222,30 +248,8 @@ while robot.step(timeStep) != -1:
         counter %= 5
 
     if state == "advance":
-        #print("x:", x, " x1:", x1, " y:", y, " y1:", y1)
-        #print("angulo:", angle)
-        
-        if x1 < x:
-            cardinal == "east"
-            if x - x1 >= 2:
-                row += 1
-                x1 = x
-        elif x < x1:
-            cardinal == "west"
-            if x1 - x >= 2:
-                row -= 1
-                x1 = x
-        if y1 < y:
-            cardinal == "south"
-            if y - y1 >= 2:
-                column -= 1
-                y1 = y
-        elif y < y1:
-            cardinal == "north"
-            if y1 - y >= 2:
-                column += 1
-                y1 = y
-        print("columna:", column, " fila:", row)
+        # print("columna:", column, " fila:", row)
+        print(cardinal)
         
         if angle not in angle_permit:
             state = "advance_fix"
@@ -254,6 +258,7 @@ while robot.step(timeStep) != -1:
                     turn_counter = 0
                     advance(1,0.97)
         else:
+            cardinalDefine(x,y)
             if y == nextTileY:
                 calcNextTileY()
             if x >= nextTileX:
@@ -309,13 +314,6 @@ while robot.step(timeStep) != -1:
                 encoder_goal = encoder_actual + encoder
                 turn_counter += 1
                 turn(0.5)
-                
-        #print("punto=", point)
-        #print(cardinal)
-        #for i in range(row_total):
-            #rows.append(row)
-        #rows_order = sorted(rows)
-    
     
     elif state == "advance_fix":
         if (angle_prox < diff_max) or (diff_min < angle_prox):
