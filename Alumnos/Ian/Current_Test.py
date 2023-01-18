@@ -4,6 +4,7 @@ from controller import Motor
 from controller import PositionSensor
 from controller import DistanceSensor
 import math
+import pandas as pd
 
 
 # Start robot & sensors
@@ -93,13 +94,6 @@ Mapping = {
     "Guardado": Checkpoint
 }
 
-r1 = 241
-g1 = 241
-b1 = 241
-ar = 0
-ag = 0
-ab = 0
-
 
 # Start movement functions
 
@@ -130,8 +124,6 @@ def angle_normalizer():
 # Start mapping functions
 
 def update_position():
-    global x
-    global y
     global x1
     global y1
     global cardinal
@@ -161,12 +153,6 @@ def update_position():
 
 def check_object(image):
     global object_state
-    global r1
-    global g1
-    global b1
-    global ar
-    global ag
-    global ab
     r = colorSensor.imageGetRed(image, 1, 0, 0)
     g = colorSensor.imageGetGreen(image, 1, 0, 0)
     b = colorSensor.imageGetBlue(image, 1, 0, 0)
@@ -176,9 +162,6 @@ def check_object(image):
         object_state = "hole"
     elif (75 <= r <= 95) and (75 <= g <= 95) and (90 <= b <= 110):
         object_state = "checkpoint"
-    ar = abs(r - r1)
-    ag = abs(g - g1)
-    ab = abs(b - b1) 
     
 def save_object():
     global next_tile
@@ -186,7 +169,7 @@ def save_object():
     global column
     update_position()
     check_object(image)
-    if (object_state != "tile"): #and (tile_counter2 != tile_counter1):
+    if (object_state != "tile"):
         if cardinal == "east":
             next_tile = (row+1, column)
         elif cardinal == "west":
@@ -206,6 +189,15 @@ while robot.step(timeStep) != -1:
     dis_lateral = distancia_lateral.getValue()
 
     image = colorSensor.getImage()
+
+    counter += 1
+
+    if counter % 110 == 0 :
+        get_angle()
+        update_position()
+        check_object(image)
+        save_object()
+        counter %= 5
     
     
     # Update movement variables
@@ -225,8 +217,6 @@ while robot.step(timeStep) != -1:
     diff_max = angle + 12
     diff_min = angle - 12
     
-    counter += 1
-    
     
     # Update mapping variables
     
@@ -244,16 +234,10 @@ while robot.step(timeStep) != -1:
         
     
     # Initialize movement state machine
-
-    if counter % 110 == 0 :
-        get_angle()
-        counter %= 5
-
+    
     if movement_state == "advance":
         #print("x:", x, " x1:", x1, " y:", y, " y1:", y1)
         #print("angulo:", angle)
-        update_position()
-        check_object(image)
         
         if angle not in angle_permit:
             movement_state = "advance_fix"
@@ -290,30 +274,29 @@ while robot.step(timeStep) != -1:
 
 
     # Initialize object state machine
-    
-    check_object(image)
-    save_object()
-    
-    if (20 < ar) and (20 < ag) and (20 < ab):
         
-        if object_state == "checkpoint":
-            #print("checkpoint")
-            Checkpoint.append(next_tile)
-            #print(Checkpoint)
+    if object_state == "checkpoint":
+        #print("checkpoint")
+        Checkpoint.append(next_tile)
+        Checkpoint = list(pd.unique(Checkpoint))
+        #print(Checkpoint)
+
+    elif object_state == "swamp":
+        #print("swamp")
+        Swamp.append(next_tile)
+        Swamp = list(pd.unique(Swamp))
+        print(Swamp)
         
-        elif object_state == "swamp":
-            #print("swamp")
-            Swamp.append(next_tile)
-            print(Swamp)
-        
-        elif object_state == "hole":
-            #print("hole")
-            save_object()
-            Hole.append(next_tile)
-            #print(Hole)
+    elif object_state == "hole":
+        #print("hole")
+        Hole.append(next_tile)
+        Hole = list(pd.unique(Hole))
+        #print(Hole)
 
 
 
 #guardar casilla anerior, compararla con la actual y ver si es diferente para recien guardar el valor
 #hacer un contador, si encuentra algo, que sume uno (aumenta cada vez que cambia de color)
 #chequear si el valor ya está en la lista, si es uno nuevo, aregarlo
+
+# py -m pip install pandas
