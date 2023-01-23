@@ -161,8 +161,10 @@ def check_object(image):
         object_state = "swamp"
     elif (r <= 47) and (g <= 47) and (b <= 47):
         object_state = "hole"
-    elif (75 <= r <= 95) and (75 <= g <= 95) and (90 <= b <= 110):
+    elif ((40 <= r <= 78) and (40 <= g <= 95) and (58 <= b <= 110)):
         object_state = "checkpoint"
+    elif (240 <= r <= 255) and (240 <= g <= 255) and (240 <= b <= 255):
+        object_state = 'tile'
     
 def save_object():
     global row
@@ -282,13 +284,15 @@ while robot.step(timeStep) != -1:
         #print("checkpoint")
         Checkpoint.append(next_tile)
         Checkpoint = list(pd.unique(Checkpoint))
-        #print(Checkpoint)
+        print(object_state)
+        print(Checkpoint)
 
     elif object_state == "swamp":
         #print("swamp")
         if original_tile not in Swamp:  
             Swamp.append(next_tile)
             Swamp = list(pd.unique(Swamp))
+            print(object_state)
             print(Swamp)
         
     elif object_state == "hole":
@@ -296,7 +300,8 @@ while robot.step(timeStep) != -1:
         if original_tile not in Hole:
             Hole.append(next_tile)
             Hole = list(pd.unique(Hole))
-            #print(Hole)
+            print(object_state)
+            print(Hole)
 
 
 
