@@ -185,7 +185,6 @@ def save_object():
             next_tile = (row, column-1)
 
 
-
 while robot.step(timeStep) != -1:
     
     # Update robot & sensors
@@ -282,10 +281,11 @@ while robot.step(timeStep) != -1:
         
     if object_state == "checkpoint":
         #print("checkpoint")
-        Checkpoint.append(next_tile)
-        Checkpoint = list(pd.unique(Checkpoint))
-        print(object_state)
-        print(Checkpoint)
+        if original_tile not in Checkpoint:
+            Checkpoint.append(next_tile)
+            Checkpoint = list(pd.unique(Checkpoint))
+            print(object_state)
+            print(Checkpoint)
 
     elif object_state == "swamp":
         #print("swamp")
@@ -297,11 +297,10 @@ while robot.step(timeStep) != -1:
         
     elif object_state == "hole":
         #print("hole")
-        if original_tile not in Hole:
-            Hole.append(next_tile)
-            Hole = list(pd.unique(Hole))
-            print(object_state)
-            print(Hole)
+        Hole.append(next_tile)
+        Hole = list(pd.unique(Hole))
+        print(object_state)
+        print(Hole)
 
 
 
