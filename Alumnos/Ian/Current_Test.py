@@ -43,9 +43,8 @@ overlap_counter = 0
 
 # Start movement variables
 
-tiles = 0
 tilesize = 0.06
-tilesize_detection = tilesize/2
+tilesize_detection = 0.07
 
 turn_range = 0.01
 turn_counter = 0
@@ -88,7 +87,6 @@ Hole = []
 Checkpoint = []
 
 trajectory = []
-missed = []
 
 original_tile = (0, 0)
 next_tile = (0,0)
@@ -141,7 +139,7 @@ def escape():
     else:
         #print("?")
         overlap_counter += 1
-        if overlap_counter >= 5:
+        if (overlap_counter >= 5):
             overlap_counter = 0
             robot_state = "release"
     trajectory = list(pd.unique(trajectory))
@@ -314,17 +312,15 @@ while robot.step(timeStep) != -1:
                 x1 = x
                 y1 = y
                 movement_state = "turn"
+                #print(x, y)
                 if dis_right > tilesize_detection:
-                    encoder_goal = encoder_actual - encoder
-                    turn(0.5)
-                    #print("derecha", x, y)
-                    missed.append(original_tile)
-                    print(missed)
-                elif dis_left > tilesize_detection:
                     encoder_goal = encoder_actual + encoder
+                    turn(0.5)
+                    #print("derecha")
+                elif dis_left > tilesize_detection:
+                    encoder_goal = encoder_actual - encoder
                     turn(-0.5)
-                    print("izquierda")
-                    missed.append(original_tile)
+                    #print("izquierda")
         
         elif movement_state == "turn":
             if(abs(encoder_actual - encoder_goal) < turn_range):
