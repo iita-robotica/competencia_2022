@@ -43,13 +43,13 @@
 		"name": "Camera",
 		"customName": "camera_1",
 		"type": "add",
-		"x": 264,
-		"y": 143,
-		"z": -289,
-		"rx": 0,
+		"x": 370,
+		"y": 125,
+		"z": 0,
+		"rx": 1,
 		"ry": 1,
 		"rz": 0,
-		"a": 2.07
+		"a": 0
 	},
 	"Distance Sensor 5": {
 		"dictName": "Distance Sensor 2",
@@ -67,6 +67,19 @@
 	"Distance Sensor 1": {
 		"dictName": "Distance Sensor 1",
 		"name": "Distance Sensor",
+		"customName": ".",
+		"type": "",
+		"x": 370,
+		"y": 0,
+		"z": -370,
+		"rx": 0,
+		"ry": 0,
+		"rz": 0,
+		"a": 0
+	},
+	"Distance Sensor 2": {
+		"dictName": "Distance Sensor 2",
+		"name": "Distance Sensor",
 		"customName": "distance_sensor_1",
 		"type": "",
 		"x": 370,
@@ -77,19 +90,6 @@
 		"rz": 0,
 		"a": 0
 	},
-	"Distance Sensor 2": {
-		"dictName": "Distance Sensor 2",
-		"name": "Distance Sensor",
-		"customName": "distance_sensor_2",
-		"type": "",
-		"x": 0,
-		"y": 50,
-		"z": -370,
-		"rx": 0,
-		"ry": 1,
-		"rz": 0,
-		"a": 1.57
-	},
 	"colsensor": {
 		"dictName": "colsensor",
 		"name": "Colour sensor",
@@ -98,10 +98,10 @@
 		"x": 0,
 		"y": -100,
 		"z": -370,
-		"rx": -0.35,
-		"ry": 0.87,
-		"rz": -0.35,
-		"a": 1.71
+		"rx": -0.25,
+		"ry": 0.9,
+		"rz": -0.25,
+		"a": 1.65
 	},
 	"gps": {
 		"dictName": "gps",
@@ -129,26 +129,39 @@
 		"rz": 0,
 		"a": 1.5708
 	},
-	"camera2": {
-		"dictName": "camera2",
-		"name": "Camera",
-		"customName": "camera_2",
-		"type": "add",
-		"x": -271,
-		"y": 145,
-		"z": -289,
+	"Distance Sensor 3": {
+		"dictName": "Distance Sensor 3",
+		"name": "Distance Sensor",
+		"customName": "distance_sensor_2",
+		"type": "",
+		"x": 0,
+		"y": 50,
+		"z": -370,
 		"rx": 0,
 		"ry": 1,
 		"rz": 0,
-		"a": 1.27
+		"a": 1.57
 	},
-	"Distance Sensor 3": {
-		"dictName": "Distance Sensor 3",
+	"Distance Sensor 4": {
+		"dictName": "Distance Sensor 4",
 		"name": "Distance Sensor",
 		"customName": "distance_sensor_3",
 		"type": "",
 		"x": -370,
 		"y": 0,
+		"z": 0,
+		"rx": 0,
+		"ry": 1,
+		"rz": 0,
+		"a": 3.1
+	},
+	"camera2": {
+		"dictName": "camera2",
+		"name": "Camera",
+		"customName": "camera_2",
+		"type": "add",
+		"x": -370,
+		"y": 125,
 		"z": 0,
 		"rx": 0,
 		"ry": 1,
