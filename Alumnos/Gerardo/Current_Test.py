@@ -45,7 +45,7 @@ overlap_counter = 0
 
 tiles = 0
 tilesize = 0.06
-tilesize_detection = tilesize/2
+tilesize_detection = 4*(tilesize/5)
 
 turn_range = 0.01
 turn_counter = 0
@@ -104,7 +104,6 @@ Mapping = {
 
 object_state = "tile"
 
-
 # Start movement functions
 
 def advance(vx, vy):
@@ -131,6 +130,7 @@ def angle_normalizer():
     return angle
 
 def escape():
+    global estado
     update_position()
     save_object()
     global trajectory
@@ -142,7 +142,7 @@ def escape():
     else:
         #print("?")
         overlap_counter += 1
-        if overlap_counter >= 5.5:
+        if overlap_counter >= 5:
             overlap_counter = 0
             robot_state = "release"
     trajectory = list(pd.unique(trajectory))
@@ -231,7 +231,8 @@ while robot.step(timeStep) != -1:
         escape()
         time_counter %= 5
     
-    
+    print(dis_left)
+# 0.0500431057029887
     # Update movement variables
     
     x = round(gps.getValues()[0]/tilesize, 1)
@@ -281,6 +282,7 @@ while robot.step(timeStep) != -1:
                         advance(1,0.97)
             else:
                 advance(1,1)
+                        
             
             if (dis_front < tilesize_detection) or (object_state == "hole"):        
                 x1 = x
@@ -324,7 +326,7 @@ while robot.step(timeStep) != -1:
                     # print(missed)
                 elif dis_left > tilesize_detection:
                     movement_state = "turn"
-                    encoder_goal = encoder_actual + encoder
+                    encoder_goal = encoder_actual - encoder
                     turn(-0.5)
                     print("izquierda")
                     missed.append(original_tile)
