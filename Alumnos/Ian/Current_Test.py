@@ -139,7 +139,7 @@ def escape():
     else:
         #print("?")
         overlap_counter += 1
-        if (overlap_counter >= 5):
+        if (overlap_counter >= 5.5):
             overlap_counter = 0
             robot_state = "release"
     trajectory = list(pd.unique(trajectory))
