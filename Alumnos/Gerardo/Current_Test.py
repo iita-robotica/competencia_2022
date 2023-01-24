@@ -184,13 +184,13 @@ def check_object(image):
     r = colorSensor.imageGetRed(image, 1, 0, 0)
     g = colorSensor.imageGetGreen(image, 1, 0, 0)
     b = colorSensor.imageGetBlue(image, 1, 0, 0)
-    if (210 <= r <= 240) and (180 <= g <= 210) and (100 <= b <= 130):
+    if (190 <= r <= 197) and (155 <= g <= 161) and (87 <= b <= 91):
         object_state = "swamp"
-    elif (r <= 47) and (g <= 47) and (b <= 47):
+    elif (0 <= r <= 40) and (0 <= g <= 40) and (0 <= b <= 40):
         object_state = "hole"
-    elif ((40 <= r <= 78) and (40 <= g <= 95) and (58 <= b <= 110)):
+    elif ((43 <= r <= 71) and (48 <= g <= 75) and (60 <= b <= 93)):
         object_state = "checkpoint"
-    elif (240 <= r <= 255) and (240 <= g <= 255) and (240 <= b <= 255):
+    elif (215 <= r <= 221) and (215 <= g <= 221) and (215 <= b <= 221):
         object_state = 'tile'
     
 def save_object():
@@ -221,18 +221,21 @@ while robot.step(timeStep) != -1:
 
     image = colorSensor.getImage()
 
+    r = colorSensor.imageGetRed(image, 1, 0, 0)
+    g = colorSensor.imageGetGreen(image, 1, 0, 0)
+    b = colorSensor.imageGetBlue(image, 1, 0, 0)
+
     time_counter += 1
 
     if time_counter % 110 == 0 :
         get_angle()
         update_position()
-        check_object(image)
         save_object()
         escape()
         time_counter %= 5
+
+    check_object(image)
     
-    print(dis_left)
-# 0.0500431057029887
     # Update movement variables
     
     x = round(gps.getValues()[0]/tilesize, 1)
@@ -346,17 +349,17 @@ while robot.step(timeStep) != -1:
         if original_tile not in Checkpoint:
             Checkpoint.append(next_tile)
             Checkpoint = list(pd.unique(Checkpoint))
-            #print(Checkpoint)
+            print(Checkpoint)
 
     elif object_state == "swamp":
         #print("swamp")
         if original_tile not in Swamp:  
             Swamp.append(next_tile)
             Swamp = list(pd.unique(Swamp))
-            #print(Swamp)
+            print(Swamp)
         
     elif object_state == "hole":
         #print("hole")
         Hole.append(next_tile)
         Hole = list(pd.unique(Hole))
-        #print(Hole)
+        print(Hole)
