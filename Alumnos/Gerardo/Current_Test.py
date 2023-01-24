@@ -4,6 +4,7 @@ from controller import Motor
 from controller import PositionSensor
 from controller import DistanceSensor
 import math
+import pandas as pd
 
 
 # Start robot & sensors
@@ -26,13 +27,18 @@ encoderIzquierdo.enable(timeStep)
 encoderDerecho = ruedaDerecha.getPositionSensor()
 encoderDerecho.enable(timeStep)
 
-distancia_frontal = robot.getDevice("distance_sensor_2")
-distancia_frontal.enable(timeStep)
-distancia_lateral = robot.getDevice("distance_sensor_1")
-distancia_lateral.enable(timeStep)
+distance_right = robot.getDevice("distance_sensor_1")
+distance_right.enable(timeStep)
+distance_front = robot.getDevice("distance_sensor_2")
+distance_front.enable(timeStep)
+distance_left = robot.getDevice("distance_sensor_3")
+distance_left.enable(timeStep)
 
 colorSensor = robot.getDevice("colour_sensor")
 colorSensor.enable(timeStep)
+
+robot_state = "explore"
+overlap_counter = 0
 
 
 # Start movement variables
@@ -59,9 +65,9 @@ angle_prox = 0
 diff_max = 0
 diff_min = 0
 
-state = "advance"
+movement_state = "advance"
 
-counter = 0
+time_counter = 0
 
 
 # Start mapping variables
@@ -75,13 +81,17 @@ row = 0
 row_max = 0
 row_min = 0
 row_total = 0
-rows = []
 
 Start = (row, column)
 Swamp = []
 Hole = []
 Checkpoint = []
-value = (0,0)
+
+trajectory = []
+missed = []
+
+original_tile = (0, 0)
+next_tile = (0,0)
 
 cardinal = "north"
 
@@ -91,6 +101,9 @@ Mapping = {
     "Agujero": Hole,
     "Guardado": Checkpoint
 }
+
+object_state = "tile"
+
 
 # Start movement functions
 
@@ -110,74 +123,40 @@ def get_angle():
         angle = 0
     return angle
 
-def angle_normalizer(ang):
-    ang = ang % 90
-    if ang < 0:
-        ang += 90
-    return ang
+def angle_normalizer():
+    global angle
+    angle = angle % 90
+    if angle < 0:
+        angle += 90
+    return angle
+
+def escape():
+    update_position()
+    save_object()
+    global trajectory
+    global overlap_counter
+    global robot_state
+    global original_tile
+    if next_tile not in trajectory:
+        trajectory.append((original_tile))
+    else:
+        #print("?")
+        overlap_counter += 1
+        if overlap_counter >= 5.5:
+            overlap_counter = 0
+            robot_state = "release"
+    trajectory = list(pd.unique(trajectory))
+    #print("t:", trajectory)
+
 
 # Start mapping functions
 
-def check_object(image):
-    '''Return the zone where is the robot'''
-    r = colorSensor.imageGetRed(image, 1, 0, 0)
-    g = colorSensor.imageGetGreen(image, 1, 0, 0)
-    b = colorSensor.imageGetBlue(image, 1, 0, 0)
-    if (210 <= r <= 240) and (180 <= g <= 210) and (100 <= b <= 130):
-        return ("swamp")
-    elif (r <= 47) and (g <= 47) and (b <= 47):
-        return ("hole")
-    elif (75 <= r <= 95) and (75 <= g <= 95) and (90 <= b <= 110):
-        return ("checkpoint")
-    
-def save_object():
-    global value
-    global row
-    global column
-    if cardinal == "east":
-        row += 1
-    elif cardinal == "west":
-        row -= 1
-    elif cardinal == "north":
-        column += 1
-    elif cardinal == "south":
-        column -= 1
-    value = (row, column)
-    return (value)
-
-nextTileY = -3
-nextTileX = -3.5
-
-def calcNextTileY():
-    '''Define the next tile on Y axis'''
-    global cardinal
-    global nextTileY
-
-    if state != "turn":
-        if cardinal == 'north':
-            nextTileY = nextTileY - 2
-        elif cardinal == 'south':
-            nextTileY = nextTileY + 2
-
-def calcNextTileX(x):
-    '''Define the next tile on X axis'''
-    global cardinal
-    global nextTileX
-
-    if state != 'turn':
-        if cardinal == 'east':
-            nextTileX = nextTileX + 2
-        elif cardinal == 'west':
-            nextTileX = nextTileX - 2
-
-def cardinalDefine(x, y):
-    '''Refresh cardinal values'''
-    global cardinal
-    global column
-    global row
+def update_position():
     global x1
     global y1
-
+    global cardinal
+    global row
+    global column
     if x1 < x:
         cardinal = "east"
         if x - x1 >= 2:
@@ -198,14 +177,60 @@ def cardinalDefine(x, y):
         if y1 - y >= 2:
             column += 1
             y1 = y
+    #print("columna:", column, " fila:", row)
+
+def check_object(image):
+    global object_state
+    r = colorSensor.imageGetRed(image, 1, 0, 0)
+    g = colorSensor.imageGetGreen(image, 1, 0, 0)
+    b = colorSensor.imageGetBlue(image, 1, 0, 0)
+    if (210 <= r <= 240) and (180 <= g <= 210) and (100 <= b <= 130):
+        object_state = "swamp"
+    elif (r <= 47) and (g <= 47) and (b <= 47):
+        object_state = "hole"
+    elif ((40 <= r <= 78) and (40 <= g <= 95) and (58 <= b <= 110)):
+        object_state = "checkpoint"
+    elif (240 <= r <= 255) and (240 <= g <= 255) and (240 <= b <= 255):
+        object_state = 'tile'
+    
+def save_object():
+    global row
+    global column
+    global original_tile
+    global next_tile
+    update_position()
+    original_tile = (row, column)
+    if cardinal == "east":
+        next_tile = (row+1, column)
+    elif cardinal == "west":
+        next_tile = (row-1, column)
+    elif cardinal == "north":
+        next_tile = (row, column+1)
+    elif cardinal == "south":
+        next_tile = (row, column-1)
+    #print(next_tile)
+
 
 while robot.step(timeStep) != -1:
+    
     # Update robot & sensors
 
-    dis_frontal = distancia_frontal.getValue()
-    dis_lateral = distancia_lateral.getValue()
+    dis_right = distance_right.getValue()
+    dis_front = distance_front.getValue()
+    dis_left = distance_left.getValue()
 
     image = colorSensor.getImage()
+
+    time_counter += 1
+
+    if time_counter % 110 == 0 :
+        get_angle()
+        update_position()
+        check_object(image)
+        save_object()
+        escape()
+        time_counter %= 5
+    
     
     # Update movement variables
     
@@ -224,7 +249,6 @@ while robot.step(timeStep) != -1:
     diff_max = angle + 12
     diff_min = angle - 12
     
-    counter += 1
     
     # Update mapping variables
     
@@ -239,87 +263,98 @@ while robot.step(timeStep) != -1:
     elif row < row_min:
         row_min = row
     row_total = abs(row_min) + row_max
+        
     
-    # Initialize state machine
-
-    if counter % 110 == 0 :
-        get_angle()
-        counter %= 5
-
-    if state == "advance":
-        # print("columna:", column, " fila:", row)
-        if angle not in angle_permit:
-            state = "advance_fix"
-            if (diff_max <= angle_prox) or (angle_prox <= diff_min):
-                if turn_counter == 20:
-                    turn_counter = 0
-                    advance(1,0.97)
-        else:
-            cardinalDefine(x,y)
-            if y == nextTileY:
-                calcNextTileY()
-            if x >= nextTileX:
-                calcNextTileX(x)
+    # Initialize movement state machine
+    
+    if robot_state == "explore":
+        #print("explore")
+        if movement_state == "advance":
+            #print("x:", x, " x1:", x1, " y:", y, " y1:", y1)
+            #print("angulo:", angle)
+            
+            if angle not in angle_permit:
+                movement_state = "advance_fix"
+                if (diff_max <= angle_prox) or (angle_prox <= diff_min):
+                    if turn_counter == 20:
+                        turn_counter = 0
+                        advance(1,0.97)
             else:
                 advance(1,1)
-
-        if check_object(image) == "checkpoint":
-            print("checkpoint")
-            save_object()
-            Checkpoint.append(value)
-            print(Checkpoint) 
-        
-        if (dis_frontal < tilesize_detection) or (check_object(image)=="swamp") or (check_object(image)=="hole"):
-            x1 = x
-            y1 = y
-
-            if cardinal == 'north':
-                nextTileY = nextTileY + 2
-            elif cardinal == 'south':
-                nextTileY = nextTileY - 2
-
-            if check_object(image)=="swamp":
-                #print("swamp")
-                if cardinal == "east":
-                    Swamp.append((row +1, column))
-                elif cardinal == "west":
-                    Swamp.append((row -1, column))
-                elif cardinal == "north":
-                    Swamp.append((row, column +1))
-                elif cardinal == "south":
-                    Swamp.append((row, column -1))
-                #print(Swamp)
-
-            elif check_object(image)=="hole":
-                #print("hole")
-                if cardinal == "east":
-                    Hole.append((row +1, column))
-                elif cardinal == "west":
-                    Hole.append((row -1, column))
-                elif cardinal == "north":
-                    Hole.append((row, column +1))
-                elif cardinal == "south":
-                    Hole.append((row, column -1))
-                #print(Hole)
             
-            state = "turn"
+            if (dis_front < tilesize_detection) or (object_state == "hole"):        
+                x1 = x
+                y1 = y
+                movement_state = "turn"
+                turn_counter += 1
+                if dis_right < tilesize_detection:
+                    encoder_goal = encoder_actual - encoder
+                    turn(-0.5)
+                else:
+                    encoder_goal = encoder_actual + encoder
+                    turn(0.5)
+        
+        elif movement_state == "advance_fix":
+            if (angle_prox < diff_max) or (diff_min < angle_prox):
+                movement_state = "advance"
+                angle = 0
+        
+        elif movement_state == "turn":
+            if(abs(encoder_actual - encoder_goal) < turn_range):
+                movement_state = "advance"
+                encoder_actual = 45
+                angle = 0
 
-            if dis_lateral < tilesize_detection:
-                encoder_goal = encoder_actual - encoder
+  
+    elif robot_state == "release":
+        #print("release")
+        if movement_state == "advance":
+            advance(1,1)
+            
+            if object_state != "hole":        
+                x1 = x
+                y1 = y
                 turn_counter += 1
-                turn(-0.5)
-            else:
-                encoder_goal = encoder_actual + encoder
-                turn_counter += 1
-                turn(0.5)
+                if dis_right > tilesize_detection:
+                    movement_state = "turn"
+                    encoder_goal = encoder_actual + encoder
+                    turn(0.5)
+                    # print("derecha", x, y)
+                    missed.append(original_tile)
+                    # print(missed)
+                elif dis_left > tilesize_detection:
+                    movement_state = "turn"
+                    encoder_goal = encoder_actual + encoder
+                    turn(-0.5)
+                    print("izquierda")
+                    missed.append(original_tile)
+        
+        elif movement_state == "turn":
+            if(abs(encoder_actual - encoder_goal) < turn_range):
+                movement_state = "advance"
+                encoder_actual = 45
+                angle = 0
+            robot_state = "explore"
     
-    elif state == "advance_fix":
-        if (angle_prox < diff_max) or (diff_min < angle_prox):
-            state = "advance"
-            angle = 0
-    
-    elif state == "turn":
-        angle = 0
-        if(abs(encoder_actual - encoder_goal) < turn_range):
-            state = "advance"
-            encoder_actual = 45
+
+    # Initialize object state machine
+        
+    if object_state == "checkpoint":
+        #print("checkpoint")
+        if original_tile not in Checkpoint:
+            Checkpoint.append(next_tile)
+            Checkpoint = list(pd.unique(Checkpoint))
+            #print(Checkpoint)
+
+    elif object_state == "swamp":
+        #print("swamp")
+        if original_tile not in Swamp:  
+            Swamp.append(next_tile)
+            Swamp = list(pd.unique(Swamp))
+            #print(Swamp)
+        
+    elif object_state == "hole":
+        #print("hole")
+        Hole.append(next_tile)
+        Hole = list(pd.unique(Hole))
+        #print(Hole)
