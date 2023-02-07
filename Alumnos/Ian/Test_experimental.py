@@ -105,7 +105,6 @@ original_tile = ((0,0))
 next_tile = ((0,0))
 
 cardinal = "north"
-cardinal_previous = "north"
 
 Mapping = {
     "Comienzo": Start,
@@ -220,7 +219,6 @@ def update_position():
     global x1
     global y1
     global cardinal
-    global cardinal_previous
     global row
     global column
     if abs(x - xr) > abs(y - yr):
