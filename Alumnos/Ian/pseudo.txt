@@ -1,0 +1,12 @@
+Esta funcion recibe los valores del gps y como resultado retorna los valores de x y de y calibrados para el estado inicial
+funcion calibracion
+    datos gps
+    avanzar, retroceder
+
+    obtener x, y (gps)
+    10 ciclos robot, avanazar
+    10 ciclos robot, retroceder
+    obtener nuevos x, y (gps)
+    calcular la diferencia
+    [retornar el offset requerido para el estado inicial]
+    diferencia -> problema

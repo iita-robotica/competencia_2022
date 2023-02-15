@@ -120,6 +120,16 @@ def coord():
         y1 = -1
     elif (0 <= y0 <= 2):
         y1 = 1
+    #print(x0, y0)
+
+def coord_2():
+    global x
+    global y
+    if x0 % 1 != 0:
+        x = round(x)
+    if y0 % 1 != 0:
+        y = round(y)
+    #print(x1, y1)
 
 def position():
     global x1
@@ -149,7 +159,8 @@ def position():
             if y1 - y >= 2:
                 column += 1
                 y1 = y
-    #print(x, y)
+    #print(x, x1)
+    #print(y, y1)
 
 def tile():
     global tile_current
@@ -236,7 +247,8 @@ while robot.step(timeStep) != -1:
         xr = x0
         yr = y0
         coord()
-        condition_block += 1  
+        coord_2()
+        condition_block += 1
     position()
     tile()
     tilecenter()
@@ -278,7 +290,7 @@ while robot.step(timeStep) != -1:
                 if is_tilecenter == True:
                     encoder_goal = encoder_new + encoder
                     turn(0.5)
-                    print("c")
+                    #print("c")
                     movement_state = "turn"
             
         #elif movement_state == "advance_fix":
