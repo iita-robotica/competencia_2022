@@ -44,6 +44,7 @@ init = 0
 timer = 0
 block_condition = 0
 block_cicle = 0
+block_state = 0
 
 tilesize = 0.06
 tilesize_front = 0.05
@@ -51,20 +52,18 @@ tilesize_side = 0.07
 
 x = 0
 y = 0
+x1 = 0
+y1 = 0
 
 x0 = 0
 y0 = 0
 xr = 0
 yr = 0
-x1 = 0
-y1 = 0
 
 xa = 0
 ya = 0
 xb = 0
 yb = 0
-xo = 0
-yo = 0
 
 row = 0
 column = 0
@@ -112,11 +111,11 @@ def turn(vel):
     wheel_left.setVelocity(-vel)
     wheel_right.setVelocity(vel)
     
-def encd():
+def encd(n):
     global encoder_new
     global movement_state
     if(abs(encoder_new - encoder_goal) < error_margin):
-        encoder_new = 45
+        encoder_new = n * 45
         movement_state = "advance"
         
 def encd_right():
@@ -148,15 +147,14 @@ def coord():
         y1 = -1
     elif (0 <= y0 <= 2):
         y1 = 1
-    #print(x0, y0)
     
 def off():
     global x1
     global y1
-    if x == xo:
-        x1 = xo
-    if y == yo:
-        y1 = yo
+    if xa != 0:
+        x1 += xa
+    if ya != 0:
+        y1 += ya
 
 def position():
     global x1
@@ -186,8 +184,6 @@ def position():
             if y1 - y >= 2:
                 column += 1
                 y1 = y
-    #print(x, x1)
-    #print(y, y1)
     
 def ang():
     global angle
@@ -217,24 +213,23 @@ def tile():
     elif cardinal == "south":
         tile_next = (row, column-1)
         tile_right = (row-1, column)
-    #print(cardinal)
-    #print(tile_current)
-    #print(tile_next)
-    #print(tile_right)
 
 def tilecenter():
     global is_tilecenter
+    global xb
+    global yb
+    xb = 1 - (round(x, 1) % 1)
+    yb = 1 - (round(y, 1) % 1)
     if cardinal == "north" or cardinal == "south":
-        if y1 == y:
+        if yb == ya and y1 == y:
             is_tilecenter = True
         else:
             is_tilecenter = False
     elif cardinal == "west" or cardinal == "east":
-        if x1 == x:
+        if xb == xa and x1 == x:
             is_tilecenter = True
         else:
             is_tilecenter = False
-    #print(cardinal)
     #print(is_tilecenter)
 
 def wall():
@@ -244,13 +239,14 @@ def wall():
         is_wall_front = True
     elif dis_front > tilesize_front:
         is_wall_front = False
-    if (dis_right <= tilesize_side): #or (tile_right in hole):
+    if (dis_right <= tilesize_side) or (tile_right in hole):
         is_wall_right = True
-    elif (dis_right > tilesize_side): #and (tile_right not in hole):
+    elif (dis_right > tilesize_side) and (tile_right not in hole):
         is_wall_right = False
 
 def object(image):
     global object_state
+    global hole
     r = color_sensor.imageGetRed(image, 1, 0, 0)
     g = color_sensor.imageGetGreen(image, 1, 0, 0)
     b = color_sensor.imageGetBlue(image, 1, 0, 0)
@@ -262,121 +258,131 @@ def object(image):
         object_state = "checkpoint"
     elif (r <= 40) and (g <= 40) and (b <= 40):
         object_state = "hole"
-    
+        hole.append(tile_next)
+        hole = list(pd.unique(hole))
 
-# Start cicles
-
-while (robot.step(timeStep) != -1) and (init >= 0):
-    
-    x = round(gps.getValues()[0]/tilesize, 1)
-    y = round(gps.getValues()[2]/tilesize, 1)
-    
-    if init <= 50:
-        advance(1,1)
-        xa = x
-        ya = y
-        init += 1
-    elif 50 < init <= 150:
-        advance(-1,-1)
-        xb = x
-        yb = y
-        init +=1
-    else:
-        xo = (xa + xb) / 2
-        yo = (ya + yb) / 2
-        init = -1
-    #print(init)
-    #print (xa, ya)
-    #print (xb, yb)
-    #print (xo, yo)
-
-while (robot.step(timeStep) != -1) and (init == -1):
-
+       
+def start_basic():
+    global dis_right
+    global dis_front
+    global dis_left
+    global image
+    global x
+    global y
+    global encoder_new
+            
     dis_right = distance_right.getValue()
     dis_front = distance_front.getValue()
     dis_left = distance_left.getValue()
-
+        
     image = color_sensor.getImage()
-    
+        
     x = round(gps.getValues()[0]/tilesize, 1)
     y = round(gps.getValues()[2]/tilesize, 1)
-    
+        
     encoder_new = encoder_right.getValue()
+
     
+def start_advanced():
+    global xr
+    global yr
+    global angle_prox
+    global start
+    global block_condition
+    
+    off()
+    position()
+    ang()
+    tile()
+    tilecenter()
+    wall()
+    object(image)
+     
     if block_condition == 0:
         x0 = round(gps.getValues()[0]/tilesize, 1)
         y0 = round(gps.getValues()[2]/tilesize, 1)
         xr = x0
         yr = y0
         coord()
-        block_condition += 1  
-    off()
-    position()
-    tile()
-    tilecenter()
-    wall()
-    ang()
-    object(image)   
-    
+        start = tile_current
+        block_condition += 1
+                
     if 0 <= angle < 30:
         angle_prox = 0
     elif 30 <= angle <= 60:
         angle_prox = 45
     elif 60 < angle <= 90:
         angle_prox = 90
+        
+
+# Start cicles
+
+while (robot.step(timeStep) != -1) and (init >= 0):
     
+    start_basic()
+    start_advanced()
+
+    if movement_state == "advance":
+
+        if (is_wall_front == False) and (object_state != "hole"):
+            fix()
+        
+        else:
+            encd_right()
+            if tile_current != start:
+                fix()
+            else:
+                init = -1
+        
+    elif movement_state == "turn":
+        encd(2)
+
+        
+
+while (robot.step(timeStep) != -1) and (init == -1):
     
+    start_basic()
+    start_advanced()
+        
     if stage_state == "linear":
         
         if movement_state == "advance":
             
             trajectory.append((tile_current))
             trajectory = list(pd.unique(trajectory))
-                    
-            if is_wall_right == True:
-                fix()        
-                if (is_wall_front == True) or (object_state == "hole"):        
-                    xr = x
-                    yr = y
-                    encd_left()
                         
-            else:
-                if block_cicle == 0:
-                    if is_tilecenter == True:
-                        encd_right()
-                        block_cicle += 1
-                elif block_cicle == 1:
-                    if timer <= 175:
-                        fix()
-                        timer += 1
-                    else:
+            if block_state == 0:
+                if is_wall_right == True:
+                    fix()       
+                    if (is_wall_front == True) or (object_state == "hole"):        
+                        xr = x
+                        yr = y
+                        encd_left()
+                else:
+                    block_state = 1        
+                
+            if block_state == 1:
+                    if block_cicle == 0:
                         if is_tilecenter == True:
                             encd_right()
-                            block_cicle += 1
-                        timer = 0
-                elif block_cicle == 2:
-                    if timer <= 100:
-                        fix()
-                        timer += 1
-                    else:
-                        if is_tilecenter == True:
-                            encd_right()
+                            block_cicle = 1
+                    elif block_cicle == 1:
+                        if timer <= 165:
+                            fix()
+                            timer += 1
+                        else:
                             block_cicle = 0
-                        timer = 0
-                #print(timer)
-            
+                            timer = 0
+                            block_state = 0
+                
         elif movement_state == "turn":
-            encd()
+            encd(1)
+            xa = 1 - (round(x, 1) % 1)
+            ya = 1 - (round(y, 1) % 1)
+        
             
 
-            
-            
-            
 # if current_tile == start: 
 #   stage_state = "floating"
-               
+                
 # elif stage_state == "floating"
-
-    if object_state == "hole":
-        hole.append(tile_next)
-        hole = list(pd.unique(hole))
