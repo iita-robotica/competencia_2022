@@ -1,31 +1,29 @@
 from controller import Robot
-from controller import GPS
 from controller import Motor
+from controller import GPS
 from controller import PositionSensor
 from controller import DistanceSensor
 import math
-import pandas as pd
-
 
 # Start robot & sensors
 
-robot = Robot()
-
 timeStep = 32
+
+robot = Robot()
 robot.step(timeStep)
 
 gps = robot.getDevice("gps")
 gps.enable(timeStep)
 
-ruedaIzquierda = robot.getDevice("wheel_1 motor")
-ruedaIzquierda.setPosition(float('inf'))
-ruedaDerecha = robot.getDevice("wheel_2 motor")
-ruedaDerecha.setPosition(float('inf'))
+wheel_left = robot.getDevice("wheel_1 motor")
+wheel_left.setPosition(float('inf'))
+wheel_right = robot.getDevice("wheel_2 motor")
+wheel_right.setPosition(float('inf'))
 
-encoderIzquierdo = ruedaIzquierda.getPositionSensor()
-encoderIzquierdo.enable(timeStep)
-encoderDerecho = ruedaDerecha.getPositionSensor()
-encoderDerecho.enable(timeStep)
+encoder_left = wheel_left.getPositionSensor()
+encoder_left.enable(timeStep)
+encoder_right = wheel_right.getPositionSensor()
+encoder_right.enable(timeStep)
 
 distance_right = robot.getDevice("distance_sensor_1")
 distance_right.enable(timeStep)
@@ -34,194 +32,97 @@ distance_front.enable(timeStep)
 distance_left = robot.getDevice("distance_sensor_3")
 distance_left.enable(timeStep)
 
-colorSensor = robot.getDevice("colour_sensor")
-colorSensor.enable(timeStep)
-
-robot_state = "explore"
-overlap_counter = 0
+color_sensor = robot.getDevice("colour_sensor")
+color_sensor.enable(timeStep)
 
 
-# Start movement variables
+# State variables
+
+init = 0
+timer = 0
+enable = 0
+block = -1
 
 tilesize = 0.06
 tilesize_front = 0.05
 tilesize_side = 0.07
-tilesize_side_release = 0.09
-
-is_tile_center = False
-wall = False
-wall_coords = (0,0)
-
-turn_range = 0.01
-turn_counter = 0
-turn_escape = 0
-
-encoder = 2.215
-encoder_goal = encoder 
 
 x = 0
 y = 0
-x0 = 0
-y0 = 0
 x1 = 0
 y1 = 0
+
+x0 = 0
+y0 = 0
 xr = 0
 yr = 0
 
-coord_save = 0
-
-angle = 0
-angle_permit = [0, 45, 90]
-angle_prox = 0
-
-diff_max = 0
-diff_min = 0
-
-movement_state = "advance"
-
-time_counter = 0
-
-
-# Start mapping variables
-
-column = 0
-column_max = 0
-column_min = 0
-column_total = 0
-
 row = 0
-row_max = 0
-row_min = 0
-row_total = 0
-
-Start = (row, column)
-Swamp = []
-Hole = []
-Checkpoint = []
-
-trajectory = []
-duplicate = []
-
-original_tile = ((0,0))
-next_tile = ((0,0))
+column = 0
 
 cardinal = "north"
 
-Mapping = {
-    "Comienzo": Start,
-    "Pantano": Swamp,
-    "Agujero": Hole,
-    "Guardado": Checkpoint
-}
+is_tilecenter = False
+is_wall_front = False
+is_wall_right = False
 
+error_margin = 0.01
+encoder = 2.215
+encoder_goal = encoder 
+
+start = (0,0)
+tile_current = (0,0)
+tile_next = (0,0)
+tile_right = (0,0)
+trajectory = []
+hole = []
+
+stage_state = "linear"
+movement_state = "advance"
 object_state = "tile"
 
 
-# Start movement functions
+# Define functions
 
 def advance(vx, vy):
-    ruedaIzquierda.setVelocity(vx)
-    ruedaDerecha.setVelocity(vy)
+    wheel_left.setVelocity(vx)
+    wheel_right.setVelocity(vy)
 
+def advance_re(vx, vy):
+    global l
+    l = 0.05
+    if is_wall_right == True:
+        if dis_right >= 0.06:
+            advance(vx, vy+l)
+        elif dis_right <= 0.04:
+            advance(vx+l, vy)   
+        else:
+            advance(vx, vy)
+        
 def turn(vel):
-    ruedaIzquierda.setVelocity(-vel)
-    ruedaDerecha.setVelocity(vel)
+    wheel_left.setVelocity(-vel)
+    wheel_right.setVelocity(vel)
     
-def get_angle():
-    global angle
-    if x != x1 and y != y1:
-        angle = math.atan2(abs(y-y1),abs(x-x1)) * 180/math.pi
-    else:
-        angle = 0
-    return angle
+def turn_re(m):
+    global encoder_new
+    global movement_state
+    if(abs(encoder_new - encoder_goal) < error_margin):
+        encoder_new = m * 45
+        movement_state = "advance"
+        
+def turn_exe(n):
+    global encoder_goal
+    global movement_state
+    encoder_goal = encoder_new + (n * encoder)
+    turn(n * 0.5)
+    movement_state = "turn"
 
-def angle_normalizer():
-    global angle
-    angle = angle % 90
-    if angle < 0:
-        angle += 90
-    return angle
-
-def wall_check():
-    global wall
-    global wall_coords
-    update_position()
-    #if cardinal == "north":
-    if (dis_front < tilesize_front):
-        wall = True
-        wall_coords = (row, column)
-    else:
-        wall = False
-
-def tile_center():
-    global is_tile_center
-    update_position()
-    if cardinal == "north" or cardinal == "south":
-        if (y%1 == 0) and (y1 == y):
-            is_tile_center = True
-        else:
-            is_tile_center = False
-    elif cardinal == "west" or cardinal == "east":
-        if (x%1 == 0) and (x1 == x):
-            is_tile_center = True
-        else:
-            is_tile_center = False
-    #print(is_tile_center)
-
-def escape():
-    update_position()
-    wall_check()
-    tile_center()
-    save_object()
-    global trajectory
-    global duplicate
-    global overlap_counter
-    global turn_escape
-    global robot_state
-    if movement_state == "advance":
-        if (next_tile not in trajectory):
-            trajectory.append((original_tile))
-            trajectory = list(pd.unique(trajectory))
-        else:
-            if (wall == False) and (wall_coords != original_tile):
-                duplicate.append((original_tile))
-                duplicate = list(pd.unique(duplicate))
-                overlap_counter = len(duplicate)
-    if turn_escape == 5:
-        duplicate.clear()
-        turn_escape = 0
-    if (overlap_counter >= 2):
-        robot_state = "release"
-    #print(duplicate)
-    #print(wall_coords)
-
-
-# Start mapping functions
-
-def coord_normalizer():
+def position():
     global x1
     global y1
-    if (x0 >= 2) or (x0 <= -2):
-        x1 = 0
-    elif (-2 <= x0 <= 0):
-        x1 = -1
-    elif (0 <= x0 <= 2):
-        x1 = 1  
-    if (y0 >= 2) or (y0 <= -2):
-        y1 = 0
-    elif (-2 <= y0 <= 0):
-        y1 = -1
-    elif (0 <= y0 <= 2):
-        y1 = 1 
-    #print(y0)
-
-def update_position():
-    #coord_normalizer()
-    global x1
-    global y1
-    global cardinal
     global row
     global column
+    global cardinal
     if abs(x - xr) > abs(y - yr):
         if x1 < x:
             cardinal = "east"
@@ -244,200 +145,177 @@ def update_position():
             if y1 - y >= 2:
                 column += 1
                 y1 = y
-    #print("fila:", row, " columna:", column)
-    #print(cardinal)
 
-def check_object(image):
+def tile():
+    global tile_current
+    global tile_next
+    global tile_right
+    tile_current = (row, column)
+    if cardinal == "east":
+        tile_next = (row+1, column)
+        tile_right = (row, column-1)
+    elif cardinal == "west":
+        tile_next = (row-1, column)
+        tile_right = (row, column+1)
+    elif cardinal == "north":
+        tile_next = (row, column+1)
+        tile_right = (row+1, column)
+    elif cardinal == "south":
+        tile_next = (row, column-1)
+        tile_right = (row-1, column)
+
+def tilecenter():
+    global is_tilecenter
+    if cardinal == "north" or cardinal == "south":
+        if y%1 == 0 and y1 == y:
+            is_tilecenter = True
+        else:
+            is_tilecenter = False
+    elif cardinal == "west" or cardinal == "east":
+        if x%1 == 0 and x1 == x:
+            is_tilecenter = True
+        else:
+            is_tilecenter = False
+
+def wall():
+    global is_wall_front
+    global is_wall_right
+    if dis_front <= tilesize_front:
+        is_wall_front = True
+    elif dis_front > tilesize_front:
+        is_wall_front = False
+    if (dis_right <= tilesize_side) or (tile_right in hole):
+        is_wall_right = True
+    elif (dis_right > tilesize_side) and (tile_right not in hole):
+        is_wall_right = False
+
+def object(image):
     global object_state
-    r = colorSensor.imageGetRed(image, 1, 0, 0)
-    g = colorSensor.imageGetGreen(image, 1, 0, 0)
-    b = colorSensor.imageGetBlue(image, 1, 0, 0)
-    if (210 <= r <= 220) and (210 <= g <= 220) and (210 <= b <= 220):
-        object_state = "tile"
-    elif (185 <= r <= 195) and (155 <= g <= 165) and (85 <= b <= 95):
+    global hole
+    r = color_sensor.imageGetRed(image, 1, 0, 0)
+    g = color_sensor.imageGetGreen(image, 1, 0, 0)
+    b = color_sensor.imageGetBlue(image, 1, 0, 0)
+    if (185 <= r <= 195) and (155 <= g <= 165) and (85 <= b <= 95):
         object_state = "swamp"
     elif (40 <= r <= 80) and (40 <= g <= 85) and (50 <= b <= 100):
         object_state = "checkpoint"
     elif (r <= 40) and (g <= 40) and (b <= 40):
         object_state = "hole"
+        if tile_next not in hole:
+            hole.append(tile_next)
+
+       
+def start_basic():
+    global dis_right
+    global dis_front
+    global dis_left
+    global image
+    global x
+    global y
+    global encoder_new
+
+    dis_right = round(distance_right.getValue(), 2)
+    dis_front = round(distance_front.getValue(), 2)
+    dis_left = round(distance_left.getValue(), 2)  
+
+    image = color_sensor.getImage()
+
+    x = round(gps.getValues()[0]/tilesize, 1)
+    y = round(gps.getValues()[2]/tilesize, 1) 
+
+    encoder_new = encoder_right.getValue()
+
     
-def save_object():
-    global row
-    global column
-    global original_tile
-    global next_tile
-    update_position()
-    original_tile = ((row, column))
-    if cardinal == "east":
-        next_tile = ((row+1, column))
-    elif cardinal == "west":
-        next_tile = ((row-1, column))
-    elif cardinal == "north":
-        next_tile = ((row, column+1))
-    elif cardinal == "south":
-        next_tile = ((row, column-1))
-    #print(next_tile)
+def start_advanced():
+    global x1
+    global y1
+    global xr
+    global yr
+    global start
+    global enable
 
+    position()
+    tile()
+    tilecenter()
+    wall()
+    object(image) 
 
-while robot.step(timeStep) != -1:
-    
-    # Update robot & sensors
-
-    dis_right = distance_right.getValue()
-    dis_front = distance_front.getValue()
-    dis_left = distance_left.getValue()
-
-    image = colorSensor.getImage()
-
-    time_counter += 1
-
-    if time_counter % 90 == 0 :
-        get_angle()
-        angle_normalizer()
-        save_object()
-        escape()
-        #tile_center()
-        time_counter %= 5
-    update_position()
-    tile_center()
-    wall_check()
-    check_object(image)
-    
-    if coord_save == 0:
+    if enable == 0:
         x0 = round(gps.getValues()[0]/tilesize, 1)
         y0 = round(gps.getValues()[2]/tilesize, 1)
+        x1 = x0
+        y1 = y0
         xr = x0
         yr = y0
-        coord_normalizer()
-        coord_save += 1
-        #print(x0, y0)
-    
-    # Update movement variables
-    
-    x = round(gps.getValues()[0]/tilesize, 1)
-    y = round(gps.getValues()[2]/tilesize, 1)
+        start = tile_current
+        enable += 1
+        
 
-    encoder_actual = encoderDerecho.getValue()
+# Start cicles
+
+while (robot.step(timeStep) != -1) and (init >= 0):
+
+    start_basic()
     
-    if 0 <= angle < 30:
-        angle_prox = 0
-    elif 30 <= angle <= 60:
-        angle_prox = 45
-    elif 60 < angle <= 90:
-        angle_prox = 90
+    if init <= 50:
+        advance(1,1)
+        init += 1
+
+    elif init > 50:
+        if y % 1 != 0:
+            advance(-1,-1)
+        else:
+            advance(0,0)
+            init = -1
         
-    diff_max = angle + 12
-    diff_min = angle - 12
+
+while (robot.step(timeStep) != -1) and (init == -1):
     
-    
-    # Update mapping variables
-    
-    if column_max < column:
-        column_max = column
-    elif column < column_min:
-        column_min = column
-    column_total = abs(column_min) + column_max
+    start_basic()
+    start_advanced()
         
-    if row_max < row:
-        row_max = row
-    elif row < row_min:
-        row_min = row
-    row_total = abs(row_min) + row_max
+    if stage_state == "linear":
         
-    
-    # Initialize movement state machine
-    
-    if robot_state == "explore":
-        #print("explore")
         if movement_state == "advance":
-            #print("x:", x, " x1:", x1, " y:", y, " y1:", y1)
-            #print("angulo:", angle)
             
-            if angle not in angle_permit:
-                movement_state = "advance_fix"
-                if (diff_max <= angle_prox) or (angle_prox <= diff_min):
-                    if turn_counter == 20:
-                        turn_counter = 0
-                        advance(1,0.97)
+            if tile_current not in trajectory:
+                trajectory.append((tile_current))
+            
+            if is_wall_right == True:
+                advance_re(1,1)       
+                if (is_wall_front == True) or (object_state == "hole"):        
+                    xr = x
+                    yr = y
+                    turn_exe(-1)                     
             else:
-                advance(1,1)
-            
-            if (dis_front < tilesize_front) or (object_state == "hole"):        
-                #x1 = x
-                #y1 = y
-                movement_state = "turn"
-                turn_counter += 1
-                turn_escape += 1
-                xr = x
-                yr = y
-                if dis_right < tilesize_side:
-                    encoder_goal = encoder_actual - encoder
-                    turn(-0.5)
+                block = 0
+                
+            if block == 0:
+                if is_tilecenter == True:
+                    turn_exe(1)
+                    block = 1
+            elif block == 1:
+                if timer <= 165:
+                    advance_re(1,1)
+                    timer += 1
                 else:
-                    encoder_goal = encoder_actual + encoder
-                    turn(0.5)
-                #print(xr, yr)
-        
-        elif movement_state == "advance_fix":
-            if (angle_prox < diff_max) or (diff_min < angle_prox):
-                movement_state = "advance"
-                angle = 0
-        
+                    timer = 0
+                    block = -1
+                
         elif movement_state == "turn":
-            if(abs(encoder_actual - encoder_goal) < turn_range):
-                movement_state = "advance"
-                encoder_actual = 45
-                angle = 0
-
-  
-    elif robot_state == "release":
-        #print("release")
-        if movement_state == "advance":
-            advance(1,1)
-            
-            if (object_state != "hole"):        
-                #x1 = x
-                #y1 = y
-                if is_tile_center == True:
-                    movement_state = "turn"
-                    #print(x, y)
-                    if dis_left > tilesize_side_release:
-                        encoder_goal = encoder_actual - encoder
-                        turn(-0.5)
-                        duplicate.clear()
-                        #print("izquierda")
-                    elif dis_right > tilesize_side_release:
-                        encoder_goal = encoder_actual + encoder
-                        turn(0.5)
-                        duplicate.clear()
-                        #print("derecha")
-        
-        elif movement_state == "turn":
-            if(abs(encoder_actual - encoder_goal) < turn_range):
-                movement_state = "advance"
-                encoder_actual = 45
-                angle = 0
-            robot_state = "explore"
+            turn_re(1)
     
 
-    # Initialize object state machine
-        
-    if object_state == "checkpoint":
-        #print("checkpoint")
-        if original_tile not in Checkpoint:
-            Checkpoint.append(next_tile)
-            Checkpoint = list(pd.unique(Checkpoint))
-            #print(Checkpoint)
 
-    elif object_state == "swamp":
-        #print("swamp")
-        if original_tile not in Swamp:  
-            Swamp.append(next_tile)
-            Swamp = list(pd.unique(Swamp))
-            #print(Swamp)
+    #print("x:", x, "x1:", x1)
+    #print("y:", y, "y1:", y1)
+
+    #print(dis_right)
+    #print(is_tilecenter)
         
-    elif object_state == "hole":
-        #print("hole")
-        Hole.append(next_tile)
-        Hole = list(pd.unique(Hole))
-        #print(Hole)
+            
+
+# if current_tile == start: 
+#   stage_state = "floating"
+                
+# elif stage_state == "floating"

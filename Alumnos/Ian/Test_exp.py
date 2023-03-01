@@ -41,6 +41,7 @@ color_sensor.enable(timeStep)
 init = 0
 timer = 0
 enable = 0
+enable_tile = 0
 block = -1
 
 tilesize = 0.06
@@ -74,6 +75,7 @@ start = (0,0)
 tile_current = (0,0)
 tile_next = (0,0)
 tile_right = (0,0)
+tile_objective = (0,0)
 trajectory = []
 hole = []
 
@@ -98,6 +100,15 @@ def advance_re(vx, vy):
             advance(vx+l, vy)   
         else:
             advance(vx, vy)
+
+def advance_tile():
+    global tile_objective
+    if enable_tile == 0:
+        tile_objective = tile_next
+        enable_tile = 1
+    turn_exe(1)
+    if tile_current != tile_objective:
+        advance_re(1,1)
         
 def turn(vel):
     wheel_left.setVelocity(-vel)
@@ -281,6 +292,7 @@ while (robot.step(timeStep) != -1) and (init == -1):
             if tile_current not in trajectory:
                 trajectory.append((tile_current))
             
+            
             if is_wall_right == True:
                 advance_re(1,1)       
                 if (is_wall_front == True) or (object_state == "hole"):        
@@ -288,19 +300,7 @@ while (robot.step(timeStep) != -1) and (init == -1):
                     yr = y
                     turn_exe(-1)                     
             else:
-                block = 0
-                
-            if block == 0:
-                if is_tilecenter == True:
-                    turn_exe(1)
-                    block = 1
-            elif block == 1:
-                if timer <= 165:
-                    advance_re(1,1)
-                    timer += 1
-                else:
-                    timer = 0
-                    block = -1
+                advance_tile()
                 
         elif movement_state == "turn":
             turn_re(1)
